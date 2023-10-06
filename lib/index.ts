@@ -1,3 +1,3 @@
-export { default as generator } from "./generator"
-export { default as ShapeFactory } from "./shapes/factory"
-export { default as IshiharaPlate } from "./IshiharaPlate"
+export { DotGenerator } from './dot-generator'
+export { IshiharaPlate } from './ishihara-plate'
+export { createShape } from './shapes'

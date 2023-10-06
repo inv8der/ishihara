@@ -1,21 +1,10 @@
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect } from 'react'
 import * as ishihara from '../lib'
-import { IshiharaFactory } from '../lib/factory'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from './assets/vite.svg'
 import './App.css'
-
-type Point = {
-  x: number
-  y: number
-  r: number
-  color?: string
-}
 
 export default function App() {
   const plateRef = useRef<ishihara.IshiharaPlate>()
-
-  const [dots, setDots] = useState<Point[]>([])
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const width = 700
   const height = 700
@@ -24,6 +13,8 @@ export default function App() {
   const maxIterations = 10000
 
   useLayoutEffect(() => {
+    let mounted = true
+
     const options = {
       height,
       width,
@@ -32,77 +23,47 @@ export default function App() {
       maxIterations,
     }
 
-    // const generator = ishihara
-    //   .generator(options)
-    //   .on("update", () => {
-    //     setDots(generator.data)
-    //   })
-    //   .on("finish", async () => {
-    //     const shape = await ishihara.ShapeFactory.create("circle")
-    //     const plate = new ishihara.IshiharaPlate(width, height, generator.data)
-    //     plate.addShape(shape)
-    //     plate.setDeficiencyType("protan")
-
-    //     setDots(plate.dots)
-    //     plateRef.current = plate
-    //   })
-    //   .start()
-
     async function createIshiharaPlate() {
-      const plate = await IshiharaFactory.create(options)
-      const shape = await ishihara.ShapeFactory.create('circle')
+      const shape = await ishihara.createShape('circle')
 
-      plate.addShape(shape)
-      plate.setDeficiencyType('protan')
-      plateRef.current = plate
+      if (mounted) {
+        const plate = new ishihara.IshiharaPlate(width, height)
+        plate.addShape(shape)
+        plate.setColors('tritan')
 
-      setDots(plate.dots)
+        const generator = new ishihara.DotGenerator(options)
+        generator.addEventListener('update', () => {
+          plate.dots = generator.data
+
+          const ctx = canvasRef.current?.getContext('2d')
+          if (ctx) {
+            plate.draw(ctx)
+          }
+        })
+        generator.start()
+
+        plateRef.current = plate
+      }
     }
 
     createIshiharaPlate()
 
-    // return () => {
-    //   generator.stop()
-    // }
+    return () => {
+      mounted = false
+    }
   }, [])
-
-  // return (
-  //   <>
-  //     <div>
-  //       <a href="https://vitejs.dev" target="_blank">
-  //         <img src={viteLogo} className="logo" alt="Vite logo" />
-  //       </a>
-  //       <a href="https://react.dev" target="_blank">
-  //         <img src={reactLogo} className="logo react" alt="React logo" />
-  //       </a>
-  //     </div>
-  //     <h1>Vite + React</h1>
-  //     <div className="card">
-  //       <button onClick={() => setCount((count) => count + 1)}>
-  //         count is {count}
-  //       </button>
-  //       <p>
-  //         Edit <code>src/App.tsx</code> and save to test HMR
-  //       </p>
-  //     </div>
-  //     <p className="read-the-docs">
-  //       Click on the Vite and React logos to learn more
-  //     </p>
-  //   </>
-  // )
 
   return (
     <div>
-      <svg width={width} height={height}>
-        {dots.map(({ x, y, r, color }, index) => (
-          <circle key={index} cx={x} cy={y} r={r} fill={color} />
-        ))}
-      </svg>
+      <canvas width={width} height={height} ref={canvasRef} />
       <button
         onClick={() => {
-          if (plateRef.current) {
-            plateRef.current.simulateColorBlindness('protanopia')
-            setDots(plateRef.current.dots)
+          const plate = plateRef.current
+          const ctx = canvasRef.current?.getContext('2d')
+
+          if (plate && ctx) {
+            plate.simulateColorBlindness('protanopia')
+            plate.draw(ctx)
           }
         }}
       >

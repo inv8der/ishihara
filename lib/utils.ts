@@ -1,6 +1,8 @@
-import Color from "colorjs.io"
-import { CopunctalPoint } from "./constants"
-import type { Vector2D, Vector3D } from "./types"
+import Color from 'colorjs.io'
+import { CopunctalPoint, RED_XYY, GREEN_XYY, BLUE_XYY } from './constants'
+import type { Vector2D, Vector3D, Point } from './types'
+
+type ColorRange = ReturnType<typeof Color.range>
 
 export function dotProduct(a: Vector3D, b: Vector3D): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -8,7 +10,7 @@ export function dotProduct(a: Vector3D, b: Vector3D): number {
 
 export function barycentric(
   coords: Vector2D,
-  triangle: [Vector2D, Vector2D, Vector2D],
+  triangle: [Vector2D, Vector2D, Vector2D]
 ): Vector3D {
   const [x1, y1] = triangle[0]
   const [x2, y2] = triangle[1]
@@ -23,19 +25,14 @@ export function barycentric(
 }
 
 export function XYtoXYZ([x, y]: Vector2D): Vector3D {
-  // Red, green, and blue in the xyY color space - source: https://en.wikipedia.org/wiki/SRGB
-  const red = [0.64, 0.33, 0.2126]
-  const green = [0.3, 0.6, 0.7152]
-  const blue = [0.15, 0.06, 0.0722]
-
   const rgbGamut: [Vector2D, Vector2D, Vector2D] = [
-    [red[0], red[1]],
-    [green[0], green[1]],
-    [blue[0], blue[1]],
+    [RED_XYY[0], RED_XYY[1]],
+    [GREEN_XYY[0], GREEN_XYY[1]],
+    [BLUE_XYY[0], BLUE_XYY[1]],
   ]
 
   const B = barycentric([x, y], rgbGamut)
-  const Y = dotProduct(B, [red[2], green[2], blue[2]])
+  const Y = dotProduct(B, [RED_XYY[2], GREEN_XYY[2], BLUE_XYY[2]])
   const X = (Y * x) / y
   const Z = (Y * (1 - x - y)) / y
 
@@ -43,28 +40,15 @@ export function XYtoXYZ([x, y]: Vector2D): Vector3D {
 }
 
 export function XYZtoXY([X, Y, Z]: Vector3D): Vector2D {
-  var x = X / (X + Y + Z)
-  var y = Y / (X + Y + Z)
+  const x = X / (X + Y + Z)
+  const y = Y / (X + Y + Z)
 
   return [x, y]
 }
 
-// function linearRGB_from_sRGB(v) {
-//   var fv = v / 255.0
-//   if (fv < 0.04045) return fv / 12.92
-//   return Math.pow((fv + 0.055) / 1.055, 2.4)
-// }
-
-// function sRGB_from_linearRGB(v) {
-//   if (v <= 0) return 0
-//   if (v >= 1) return 255
-//   if (v < 0.0031308) return 0.5 + v * 12.92 * 255
-//   return 0 + 255 * (Math.pow(v, 1.0 / 2.4) * 1.055 - 0.055)
-// }
-
 export function findIntersection(
   line1: [Vector2D, Vector2D],
-  line2: [Vector2D, Vector2D],
+  line2: [Vector2D, Vector2D]
 ): Vector2D {
   const m1 = (line1[0][1] - line1[1][1]) / (line1[0][0] - line1[1][0])
   const m2 = (line2[0][1] - line2[1][1]) / (line2[0][0] - line2[1][0])
@@ -76,59 +60,60 @@ export function findIntersection(
   return [x, y]
 }
 
-export function generateConfusionLines(type: "deutan" | "protan" | "tritan") {
-  const red = new Color("#ff0000").to("xyz")
-  const green = new Color("#00ff00").to("xyz")
-  const blue = new Color("#0000ff").to("xyz")
+export function generateConfusionLines(
+  type: 'deutan' | 'protan' | 'tritan'
+): ColorRange[] {
+  const red = new Color('#ff0000').to('xyz')
+  const green = new Color('#00ff00').to('xyz')
+  const blue = new Color('#0000ff').to('xyz')
 
   const redXY = XYZtoXY(red.coords)
-  const greenXY = XYZtoXY(green.coords)
   const blueXY = XYZtoXY(blue.coords)
 
   let startColorRange
   let createConfusionLine
 
   switch (type) {
-    case "deutan": {
-      startColorRange = blue.range(green, { space: "xyz" })
+    case 'deutan': {
+      startColorRange = blue.range(green, { space: 'xyz' })
       createConfusionLine = (color: Color) => {
-        const colorXY = XYZtoXY(color.to("xyz").coords)
+        const colorXY = XYZtoXY(color.to('xyz').coords)
         const [x, y] = findIntersection(
           [blueXY, redXY],
-          [colorXY, CopunctalPoint.DEUTAN],
+          [colorXY, CopunctalPoint.DEUTAN]
         )
-        return color.range(new Color("xyz", XYtoXYZ([x, y])), {
-          space: "xyz",
+        return color.range(new Color('xyz', XYtoXYZ([x, y])), {
+          space: 'xyz',
         })
       }
       break
     }
 
-    case "protan": {
-      startColorRange = blue.range(green, { space: "xyz" })
+    case 'protan': {
+      startColorRange = blue.range(green, { space: 'xyz' })
       createConfusionLine = (color: Color) => {
-        const colorXY = XYZtoXY(color.to("xyz").coords)
+        const colorXY = XYZtoXY(color.to('xyz').coords)
         const [x, y] = findIntersection(
           [blueXY, redXY],
-          [colorXY, CopunctalPoint.PROTAN],
+          [colorXY, CopunctalPoint.PROTAN]
         )
-        return color.range(new Color("xyz", XYtoXYZ([x, y])), {
-          space: "xyz",
+        return color.range(new Color('xyz', XYtoXYZ([x, y])), {
+          space: 'xyz',
         })
       }
       break
     }
 
-    case "tritan": {
-      startColorRange = green.range(red, { space: "xyz" })
+    case 'tritan': {
+      startColorRange = green.range(red, { space: 'xyz' })
       createConfusionLine = (color: Color) => {
-        const colorXY = XYZtoXY(color.to("xyz").coords)
+        const colorXY = XYZtoXY(color.to('xyz').coords)
         const [x, y] = findIntersection(
           [blueXY, redXY],
-          [colorXY, CopunctalPoint.TRITAN],
+          [colorXY, CopunctalPoint.TRITAN]
         )
-        return color.range(new Color("xyz", XYtoXYZ([x, y])), {
-          space: "xyz",
+        return color.range(new Color('xyz', XYtoXYZ([x, y])), {
+          space: 'xyz',
         })
       }
       break
@@ -149,6 +134,28 @@ export function generateConfusionLines(type: "deutan" | "protan" | "tritan") {
   return confusionLines
 }
 
+export function isPointInImage(image: ImageData, point: Point): boolean {
+  for (let i = 0; i <= point.radius; i++) {
+    for (let r = 0; r <= point.radius; r++) {
+      const x = point.x + Math.cos(i * Math.PI * 2) * r
+      const y = point.y + Math.sin(i * Math.PI * 2) * r
+
+      const index = (Math.floor(y) * image.width + Math.floor(x)) * 4
+
+      const red = image.data[index]
+      const green = image.data[index + 1]
+      const blue = image.data[index + 2]
+      const alpha = image.data[index + 3]
+
+      if ((red + green + blue) * (alpha / 255) < 127) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
 export async function loadImageData(url: string): Promise<ImageData> {
   const image = new Image()
   image.src = url
@@ -156,7 +163,7 @@ export async function loadImageData(url: string): Promise<ImageData> {
   await image.decode()
 
   const canvas = new OffscreenCanvas(image.width, image.height)
-  const context = canvas.getContext("2d")!
+  const context = canvas.getContext('2d')!
   context.drawImage(image, 0, 0, image.width, image.height)
 
   return context.getImageData(0, 0, image.width, image.height)

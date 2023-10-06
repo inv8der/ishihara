@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 
-import { kdTree } from "kd-tree-javascript"
-import type { Point } from "../types"
+import { kdTree } from 'kd-tree-javascript'
+import type { Point } from '../types'
 
 type Circle = {
   cx: number
@@ -13,7 +13,7 @@ function generateRandomPoint(options: {
   minRadius: number
   maxRadius: number
   bounds: Circle
-}): Point {
+}): Omit<Point, 'id'> {
   const { minRadius, maxRadius, bounds } = options
 
   const radius = minRadius + Math.random() * (maxRadius - minRadius)
@@ -22,11 +22,7 @@ function generateRandomPoint(options: {
   const x = bounds.cx + Math.cos(radians) * distance
   const y = bounds.cy + Math.sin(radians) * distance
 
-  return {
-    x: x,
-    y: y,
-    r: radius,
-  }
+  return { x, y, radius }
 }
 
 function* generatePlate(options: {
@@ -39,7 +35,6 @@ function* generatePlate(options: {
   const { width, height, minRadius, maxRadius, maxIterations } = options
   const nearestCount = Math.ceil((maxRadius / minRadius) * 5)
 
-  const points = []
   const plate = {
     cx: width / 2,
     cy: height / 2,
@@ -48,18 +43,24 @@ function* generatePlate(options: {
   const tree = new kdTree<Point>(
     [],
     (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2,
-    ["x", "y"],
+    ['x', 'y']
   )
 
+  let count = 0
   let tries = 0
   while (tries < maxIterations) {
-    const point = generateRandomPoint({ minRadius, maxRadius, bounds: plate })
+    const p = generateRandomPoint({
+      minRadius,
+      maxRadius,
+      bounds: plate,
+    })
+    const point: Point = { id: count + 1, ...p }
     const nearest = tree.nearest(point, nearestCount)
 
     const invalidPlacement = nearest.some(([p]) => {
       const a = point.x - p.x
       const b = point.y - p.y
-      return a ** 2 + b ** 2 < (point.r + p.r) ** 2
+      return a ** 2 + b ** 2 < (point.radius + p.radius) ** 2
     })
 
     if (invalidPlacement) {
@@ -67,7 +68,7 @@ function* generatePlate(options: {
       continue
     }
 
-    points.push(point)
+    count += 1
     tree.insert(point)
     yield point
     tries = 0
@@ -78,22 +79,22 @@ self.onmessage = async function (e: MessageEvent) {
   const { command, args } = e.data
 
   switch (command) {
-    case "start": {
-      const points = await new Promise((resolve) => {
+    case 'start': {
+      const data = await new Promise<Point[]>((resolve) => {
         const iterator = generatePlate(
-          ...(args as Parameters<typeof generatePlate>),
+          ...(args as Parameters<typeof generatePlate>)
         )
 
-        const points = []
+        const points: Point[] = []
         for (const value of iterator) {
           points.push(value)
-          self.postMessage({ type: "update", data: points })
+          self.postMessage({ type: 'update', data: points })
         }
 
         resolve(points)
       })
 
-      self.postMessage({ type: "finish", data: points })
+      self.postMessage({ type: 'finish', data })
       break
     }
   }
