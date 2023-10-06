@@ -5,12 +5,12 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/my-lib.umd.cjs",
-  "module": "./dist/my-lib.js",
+  "main": "./dist/ishihara.umd.cjs",
+  "module": "./dist/ishiharajs",
   "exports": {
     ".": {
-      "import": "./dist/my-lib.js",
-      "require": "./dist/my-lib.umd.cjs"
+      "import": "./dist/ishihara.js",
+      "require": "./dist/ishihara.umd.cjs"
     }
   },
   "scripts": {

@@ -7,6 +7,7 @@ export default defineConfig({
     lib: {
       entry: './lib/index.ts',
       name: 'ishihara',
+      fileName: 'ishihara',
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
