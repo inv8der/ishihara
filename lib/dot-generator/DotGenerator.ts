@@ -1,3 +1,4 @@
+import DotGeneratorWorker from './worker?worker&inline'
 import type { Point } from '../types'
 
 type Options = {
@@ -35,9 +36,7 @@ export default class DotGenerator extends EventTarget {
       )
       this.abortController = controller
 
-      this.worker = new Worker(new URL('./worker', import.meta.url), {
-        type: 'module',
-      })
+      this.worker = new DotGeneratorWorker()
       this.worker.addEventListener('message', (e: MessageEvent) => {
         const message = e.data
 
