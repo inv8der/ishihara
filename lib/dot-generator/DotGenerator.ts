@@ -25,7 +25,7 @@ export default class DotGenerator extends EventTarget {
   }
 
   public start() {
-    new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       const controller = new AbortController()
       controller.signal.addEventListener(
         'abort',
@@ -54,6 +54,10 @@ export default class DotGenerator extends EventTarget {
         this.dispatchEvent(new Event(message.type))
       })
       this.worker.postMessage({ command: 'start', args: [this.options] })
+    })
+
+    promise.catch(() => {
+      // Silently ignore any errors since this function doesn't currently return a promise
     })
   }
 

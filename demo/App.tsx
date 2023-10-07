@@ -1,57 +1,64 @@
-import { useRef, useLayoutEffect } from 'react'
-import * as ishihara from '../lib'
+import { useRef, useLayoutEffect, useEffect, useState } from 'react'
+import { IshiharaPlate, DotGenerator, createShape } from '../lib'
 import './App.css'
 
+const width = 700
+const height = 700
+const minRadius = 3.5 // (width + height) / 600
+const maxRadius = 15 // (width + height) / 150
+const maxIterations = 10000
+
+type Shapes = Record<'circle' | 'triangle' | 'square', ImageData>
+
 export default function App() {
-  const plateRef = useRef<ishihara.IshiharaPlate>()
+  const plateRef = useRef<IshiharaPlate>()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const width = 700
-  const height = 700
-  const minRadius = 3.5 // (width + height) / 600
-  const maxRadius = 15 // (width + height) / 150
-  const maxIterations = 10000
+  const [shapes, setShapes] = useState<Shapes>()
+
+  useEffect(() => {
+    Promise.all([
+      createShape('circle'),
+      createShape('triangle'),
+      createShape('square'),
+    ]).then((shapes) => {
+      setShapes({
+        circle: shapes[0],
+        triangle: shapes[1],
+        square: shapes[2],
+      })
+    })
+  }, [])
 
   useLayoutEffect(() => {
-    let mounted = true
+    if (shapes) {
+      const plate = new IshiharaPlate(width, height)
+      plateRef.current = plate
 
-    const options = {
-      height,
-      width,
-      minRadius,
-      maxRadius,
-      maxIterations,
-    }
+      plate.addShape(shapes.circle)
+      plate.setColors('tritan')
 
-    async function createIshiharaPlate() {
-      const shape = await ishihara.createShape('circle')
+      const generator = new DotGenerator({
+        height,
+        width,
+        minRadius,
+        maxRadius,
+        maxIterations,
+      })
+      generator.addEventListener('update', () => {
+        plate.dots = generator.data
+        const ctx = canvasRef.current?.getContext('2d')
+        if (ctx) {
+          plate.draw(ctx)
+        }
+      })
+      generator.start()
 
-      if (mounted) {
-        const plate = new ishihara.IshiharaPlate(width, height)
-        plate.addShape(shape)
-        plate.setColors('tritan')
-
-        const generator = new ishihara.DotGenerator(options)
-        generator.addEventListener('update', () => {
-          plate.dots = generator.data
-
-          const ctx = canvasRef.current?.getContext('2d')
-          if (ctx) {
-            plate.draw(ctx)
-          }
-        })
-        generator.start()
-
-        plateRef.current = plate
+      return () => {
+        generator.stop()
       }
     }
-
-    createIshiharaPlate()
-
-    return () => {
-      mounted = false
-    }
-  }, [])
+  }, [shapes])
 
   return (
     <div>
