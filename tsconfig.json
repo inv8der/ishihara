@@ -20,6 +20,18 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["demo"],
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "target": "ESNext",
+      "lib": ["ESNext"],
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "paths": {}
+    },
+    "include": ["scripts/*.mts"]
+  },
   "references": [{ "path": "./tsconfig.node.json" }]
 }
