@@ -2,6 +2,7 @@ import Color from 'colorjs.io'
 import { generateConfusionLines, isPointInImage } from '../utils'
 import type { Point } from '../types'
 import * as brettel from '../simulations/brettel'
+import * as shapes from '../shapes'
 
 type Transform = (p: Point) => Point
 
@@ -97,17 +98,18 @@ export default class IshiharaPlate {
     })
   }
 
-  public addShape(shape: ImageData) {
-    const ratio = Math.min(this.width / shape.width, this.height / shape.height)
-    const scaledImageWidth = shape.width * ratio
-    const scaledImageHeight = shape.height * ratio
+  public addShape(shape: 'circle' | 'square' | 'triangle') {
+    const image = shapes[shape]
+    const ratio = Math.min(this.width / image.width, this.height / image.height)
+    const scaledImageWidth = image.width * ratio
+    const scaledImageHeight = image.height * ratio
 
-    const imageCanvas = new OffscreenCanvas(shape.width, shape.height)
+    const imageCanvas = new OffscreenCanvas(image.width, image.height)
     const plateCanvas = new OffscreenCanvas(this.width, this.height)
     const imageContext = imageCanvas.getContext('2d')!
     const plateContext = plateCanvas.getContext('2d')!
 
-    imageContext.putImageData(shape, 0, 0)
+    imageContext.putImageData(image, 0, 0)
 
     plateContext.fillStyle = '#ffffff'
     plateContext.fillRect(0, 0, this.width, this.height)
