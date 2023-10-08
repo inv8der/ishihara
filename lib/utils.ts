@@ -155,16 +155,3 @@ export function isPointInImage(image: ImageData, point: Point): boolean {
 
   return false
 }
-
-export async function loadImageData(url: string): Promise<ImageData> {
-  const image = new Image()
-  image.src = url
-
-  await image.decode()
-
-  const canvas = new OffscreenCanvas(image.width, image.height)
-  const context = canvas.getContext('2d')!
-  context.drawImage(image, 0, 0, image.width, image.height)
-
-  return context.getImageData(0, 0, image.width, image.height)
-}
