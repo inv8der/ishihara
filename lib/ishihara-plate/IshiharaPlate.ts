@@ -131,6 +131,12 @@ export default class IshiharaPlate {
     this._imageData = plateContext.getImageData(0, 0, this.width, this.height)
   }
 
+  public reset() {
+    this._transforms.set('color', null)
+    this._transforms.set('filter', null)
+    this._imageData = null
+  }
+
   public draw(ctx: CanvasRenderingContext2D) {
     ctx.clearRect(0, 0, this.width, this.height)
 
