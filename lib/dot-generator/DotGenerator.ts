@@ -11,7 +11,6 @@ type GeneratorOptions = {
 
 export default class DotGenerator extends EventTarget {
   private _worker: Worker | null = null
-  private _abortController: AbortController | null = null
   private _options: GeneratorOptions
   private _data: Point[] = []
 
@@ -25,47 +24,23 @@ export default class DotGenerator extends EventTarget {
   }
 
   public start() {
-    const promise = new Promise((resolve, reject) => {
-      const controller = new AbortController()
-      controller.signal.addEventListener(
-        'abort',
-        () => reject(controller.signal.reason),
-        {
-          once: true,
-        }
-      )
-      this._abortController = controller
-
-      this._worker = new DotGeneratorWorker()
-      this._worker.addEventListener('message', (e: MessageEvent) => {
-        const message = e.data
-
-        switch (message.type) {
-          case 'update':
-            this._data = message.data
-            break
-
-          case 'finish':
-            this._data = message.data
-            resolve(message.data)
-            break
-        }
-
-        this.dispatchEvent(new Event(message.type))
-      })
-      this._worker.postMessage({ command: 'start', args: [this._options] })
+    this._worker = new DotGeneratorWorker()
+    this._worker.addEventListener('message', (e: MessageEvent) => {
+      const message = e.data
+      switch (message.type) {
+        case 'update':
+        case 'finish':
+          this._data = message.data
+          break
+      }
+      this.dispatchEvent(new Event(message.type))
     })
-
-    promise.catch(() => {
-      // Silently ignore any errors since this function doesn't currently return a promise
-    })
+    this._worker.postMessage({ command: 'start', args: [this._options] })
   }
 
   public stop() {
     this._worker?.terminate()
-    this._abortController?.abort()
     this._worker = null
-    this._abortController = null
   }
 
   public addEventListener(
