@@ -1,7 +1,7 @@
 import DotGeneratorWorker from './worker?worker&inline'
 import type { Point } from '../types'
 
-type Options = {
+type GeneratorOptions = {
   width: number
   height: number
   minRadius: number
@@ -12,14 +12,14 @@ type Options = {
 export default class DotGenerator extends EventTarget {
   private _worker: Worker | null = null
   private _abortController: AbortController | null = null
-  private _options: Options
+  private _options: GeneratorOptions
   private _data: Point[] = []
 
   get data() {
     return this._data.map<Point>((p) => ({ ...p }))
   }
 
-  constructor(options: Options) {
+  constructor(options: GeneratorOptions) {
     super()
     this._options = options
   }
