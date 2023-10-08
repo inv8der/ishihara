@@ -18,17 +18,24 @@ type DeficiencyType =
   | 'achromatomaly'
 
 export default class IshiharaPlate {
-  private width: number
-  private height: number
-  private imageData: ImageData | null = null
+  private _width: number
+  private _height: number
+  private _dots: Point[] = []
+  private _imageData: ImageData | null = null
 
   // Insertion order matters here, as it will determine the order in which transforms are applied
-  private transforms: Map<'color' | 'filter', Transform | null> = new Map([
+  private _transforms: Map<'color' | 'filter', Transform | null> = new Map([
     ['color', null],
     ['filter', null],
   ])
 
-  private _dots: Point[] = []
+  public get width() {
+    return this._width
+  }
+
+  public get height() {
+    return this._height
+  }
 
   public get dots() {
     return this._dots
@@ -39,13 +46,13 @@ export default class IshiharaPlate {
   }
 
   constructor(width: number, height: number, dots: Point[] = []) {
-    this.width = width
-    this.height = height
+    this._width = width
+    this._height = height
     this.dots = dots
   }
 
   public simulateColorBlindness(type: DeficiencyType) {
-    this.transforms.set('filter', (point) => {
+    this._transforms.set('filter', (point) => {
       const color = new Color(point.color ?? '#000000').to('srgb')
       let transform = brettel.normal
 
@@ -80,7 +87,7 @@ export default class IshiharaPlate {
 
     const generatedColors = new Map<number, [string, string]>()
 
-    this.transforms.set('color', (point) => {
+    this._transforms.set('color', (point) => {
       const [onColor, offColor] = generatedColors.get(point.id) ?? [
         randomConfusionLine(Math.random() * 0.5).toString(),
         randomConfusionLine(0.5 + Math.random() * 0.5).toString(),
@@ -91,7 +98,7 @@ export default class IshiharaPlate {
       return {
         ...point,
         color:
-          this.imageData && isPointInImage(this.imageData, point)
+          this._imageData && isPointInImage(this._imageData, point)
             ? onColor
             : offColor,
       }
@@ -121,7 +128,7 @@ export default class IshiharaPlate {
       scaledImageHeight
     )
 
-    this.imageData = plateContext.getImageData(0, 0, this.width, this.height)
+    this._imageData = plateContext.getImageData(0, 0, this.width, this.height)
   }
 
   public draw(ctx: CanvasRenderingContext2D) {
@@ -129,7 +136,7 @@ export default class IshiharaPlate {
 
     this._dots.forEach((p) => {
       let point = { ...p }
-      this.transforms.forEach((transform) => {
+      this._transforms.forEach((transform) => {
         point = transform?.(point) ?? point
       })
 
@@ -144,7 +151,7 @@ export default class IshiharaPlate {
   public paintDots(): Point[] {
     return this._dots.map((p) => {
       let point = { ...p }
-      this.transforms.forEach((transform) => {
+      this._transforms.forEach((transform) => {
         point = transform?.(point) ?? point
       })
       return point

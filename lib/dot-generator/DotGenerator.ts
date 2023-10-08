@@ -10,18 +10,18 @@ type Options = {
 }
 
 export default class DotGenerator extends EventTarget {
-  private worker: Worker | null = null
-  private abortController: AbortController | null = null
-  private options: Options
-
+  private _worker: Worker | null = null
+  private _abortController: AbortController | null = null
+  private _options: Options
   private _data: Point[] = []
+
   get data() {
     return this._data.map<Point>((p) => ({ ...p }))
   }
 
   constructor(options: Options) {
     super()
-    this.options = options
+    this._options = options
   }
 
   public start() {
@@ -34,10 +34,10 @@ export default class DotGenerator extends EventTarget {
           once: true,
         }
       )
-      this.abortController = controller
+      this._abortController = controller
 
-      this.worker = new DotGeneratorWorker()
-      this.worker.addEventListener('message', (e: MessageEvent) => {
+      this._worker = new DotGeneratorWorker()
+      this._worker.addEventListener('message', (e: MessageEvent) => {
         const message = e.data
 
         switch (message.type) {
@@ -53,7 +53,7 @@ export default class DotGenerator extends EventTarget {
 
         this.dispatchEvent(new Event(message.type))
       })
-      this.worker.postMessage({ command: 'start', args: [this.options] })
+      this._worker.postMessage({ command: 'start', args: [this._options] })
     })
 
     promise.catch(() => {
@@ -62,10 +62,10 @@ export default class DotGenerator extends EventTarget {
   }
 
   public stop() {
-    this.worker?.terminate()
-    this.abortController?.abort()
-    this.worker = null
-    this.abortController = null
+    this._worker?.terminate()
+    this._abortController?.abort()
+    this._worker = null
+    this._abortController = null
   }
 
   public addEventListener(
