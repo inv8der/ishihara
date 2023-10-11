@@ -9,6 +9,7 @@ export default defineConfig({
       name: 'ishihara',
       fileName: 'ishihara',
     },
+    sourcemap: true,
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
       // into your library

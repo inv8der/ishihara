@@ -3,10 +3,11 @@
   "version": "0.3.0",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "lib"
   ],
   "main": "./dist/ishihara.umd.cjs",
-  "module": "./dist/ishiharajs",
+  "module": "./dist/ishihara.js",
   "exports": {
     ".": {
       "import": "./dist/ishihara.js",
