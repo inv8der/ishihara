@@ -1,6 +1,6 @@
 {
   "name": "@inv8der/ishihara",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "files": [
     "dist",
