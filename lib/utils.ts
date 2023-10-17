@@ -4,6 +4,11 @@ import type { Vector2D, Vector3D, Point } from './types'
 
 type ColorRange = ReturnType<typeof Color.range>
 
+export function roundToDecimal(value: number, decimal: number = 0): number {
+  // See https://expertcodeblog.wordpress.com/2018/02/12/typescript-javascript-round-number-by-decimal-pecision/
+  return Number(Math.round(Number(`${value}e${decimal}`)) + `e-${decimal}`)
+}
+
 export function dotProduct(a: Vector3D, b: Vector3D): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
@@ -114,21 +119,23 @@ export function generateConfusionLines(
         )
         return color.range(new Color('xyz', XYtoXYZ([x, y])), {
           space: 'xyz',
+          outputSpace: 'srgb',
         })
       }
       break
     }
   }
 
+  const numLines = 10
   const confusionLines = []
-  const bounds = [0.15, 0.85]
-  const step = (bounds[1] - bounds[0]) / 10
+  const bounds = [0.1, 0.9]
+  const step = roundToDecimal((bounds[1] - bounds[0]) / numLines, 4)
   let percentage = bounds[0]
 
-  while (percentage <= bounds[1]) {
+  for (let i = 0; i < numLines; i += 1) {
     const startColor = startColorRange(percentage)
     confusionLines.push(createConfusionLine(startColor))
-    percentage += step
+    percentage = roundToDecimal(percentage + step, 4)
   }
 
   return confusionLines
