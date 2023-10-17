@@ -1,6 +1,6 @@
-import Color from "colorjs.io"
-import { dotProduct } from "../utils"
-import type { Vector3D } from "../types"
+import Color from 'colorjs.io'
+import { dotProduct } from '../utils'
+import type { Vector3D } from '../types'
 
 // const simulations = {
 //   normal: (v) => v,
@@ -14,7 +14,7 @@ import type { Vector3D } from "../types"
 //   achromatomaly: (v) => monochrome_with_severity(v, 0.6),
 // }
 
-type BrettelParams = {
+interface BrettelParams {
   projection1: [Vector3D, Vector3D, Vector3D]
   projection2: [Vector3D, Vector3D, Vector3D]
   separationPlaneNormal: Vector3D
@@ -26,7 +26,7 @@ type ColorTransform = (rgb: string | ColorCoords) => ColorCoords
 
 // https://github.com/DaltonLens/libDaltonLens
 const brettelParamsByType: Record<
-  "protan" | "deutan" | "tritan",
+  'protan' | 'deutan' | 'tritan',
   BrettelParams
 > = {
   protan: {
@@ -73,19 +73,19 @@ const brettelParamsByType: Record<
 }
 
 function toColor(rgb: string | ColorCoords): Color {
-  return typeof rgb === "string"
-    ? new Color(rgb).to("srgb")
-    : new Color("srgb", rgb)
+  return typeof rgb === 'string'
+    ? new Color(rgb).to('srgb')
+    : new Color('srgb', rgb)
 }
 
 function brettel(
   rgb: string | ColorCoords,
-  type: "protan" | "deutan" | "tritan",
-  severity: number,
+  type: 'protan' | 'deutan' | 'tritan',
+  severity: number
 ) {
   // Go from sRGB to linearRGB
   const color = toColor(rgb)
-  const linearRGB = color.to("srgb-linear").coords
+  const linearRGB = color.to('srgb-linear').coords
 
   // Check on which plane we should project by comparing wih the separation plane normal.
   const { separationPlaneNormal, projection1, projection2 } =
@@ -96,7 +96,7 @@ function brettel(
       : projection2
 
   // Transform to the full dichromat projection plane.
-  const simulatedColor = new Color("srgb-linear", [0, 0, 0])
+  const simulatedColor = new Color('srgb-linear', [0, 0, 0])
 
   simulatedColor.coords[0] =
     projection[0][0] * linearRGB[0] +
@@ -123,14 +123,14 @@ function brettel(
     simulatedColor.coords[2] * severity + linearRGB[2] * (1.0 - severity)
 
   // Go back to sRGB
-  return simulatedColor.to("srgb").coords
+  return simulatedColor.to('srgb').coords
 }
 
 export const normal: ColorTransform = (rgb) => toColor(rgb).coords
-export const protanopia: ColorTransform = (rgb) => brettel(rgb, "protan", 1.0)
-export const protanomaly: ColorTransform = (rgb) => brettel(rgb, "protan", 0.6)
-export const deuteranopia: ColorTransform = (rgb) => brettel(rgb, "deutan", 1.0)
+export const protanopia: ColorTransform = (rgb) => brettel(rgb, 'protan', 1.0)
+export const protanomaly: ColorTransform = (rgb) => brettel(rgb, 'protan', 0.6)
+export const deuteranopia: ColorTransform = (rgb) => brettel(rgb, 'deutan', 1.0)
 export const deuteranomaly: ColorTransform = (rgb) =>
-  brettel(rgb, "deutan", 0.6)
-export const tritanopia: ColorTransform = (rgb) => brettel(rgb, "tritan", 1.0)
-export const tritanomaly: ColorTransform = (rgb) => brettel(rgb, "tritan", 0.6)
+  brettel(rgb, 'deutan', 0.6)
+export const tritanopia: ColorTransform = (rgb) => brettel(rgb, 'tritan', 1.0)
+export const tritanomaly: ColorTransform = (rgb) => brettel(rgb, 'tritan', 0.6)

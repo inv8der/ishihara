@@ -1,7 +1,8 @@
 import DotGeneratorWorker from './worker?worker&inline'
+import type { WorkerEvent } from './worker'
 import type { Point } from '../types'
 
-type GeneratorOptions = {
+interface GeneratorOptions {
   width: number
   height: number
   minRadius: number
@@ -25,7 +26,7 @@ export default class DotGenerator extends EventTarget {
 
   public start() {
     this._worker = new DotGeneratorWorker()
-    this._worker.addEventListener('message', (e: MessageEvent) => {
+    this._worker.addEventListener('message', (e: MessageEvent<WorkerEvent>) => {
       const message = e.data
       switch (message.type) {
         case 'update':

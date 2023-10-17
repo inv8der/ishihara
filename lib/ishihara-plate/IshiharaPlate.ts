@@ -24,7 +24,7 @@ export default class IshiharaPlate {
   private _imageData: ImageData | null = null
 
   // Insertion order matters here, as it will determine the order in which transforms are applied
-  private _transforms: Map<'color' | 'filter', Transform | null> = new Map([
+  private _transforms = new Map<'color' | 'filter', Transform | null>([
     ['color', null],
     ['filter', null],
   ])
@@ -113,22 +113,24 @@ export default class IshiharaPlate {
 
     const imageCanvas = new OffscreenCanvas(image.width, image.height)
     const plateCanvas = new OffscreenCanvas(this.width, this.height)
-    const imageContext = imageCanvas.getContext('2d')!
-    const plateContext = plateCanvas.getContext('2d')!
+    const imageContext = imageCanvas.getContext('2d')
+    const plateContext = plateCanvas.getContext('2d')
 
-    imageContext.putImageData(image, 0, 0)
+    if (imageContext && plateContext) {
+      imageContext.putImageData(image, 0, 0)
 
-    plateContext.fillStyle = '#ffffff'
-    plateContext.fillRect(0, 0, this.width, this.height)
-    plateContext.drawImage(
-      imageCanvas,
-      (this.width - scaledImageWidth) / 2,
-      (this.height - scaledImageHeight) / 2,
-      scaledImageWidth,
-      scaledImageHeight
-    )
+      plateContext.fillStyle = '#ffffff'
+      plateContext.fillRect(0, 0, this.width, this.height)
+      plateContext.drawImage(
+        imageCanvas,
+        (this.width - scaledImageWidth) / 2,
+        (this.height - scaledImageHeight) / 2,
+        scaledImageWidth,
+        scaledImageHeight
+      )
 
-    this._imageData = plateContext.getImageData(0, 0, this.width, this.height)
+      this._imageData = plateContext.getImageData(0, 0, this.width, this.height)
+    }
   }
 
   public reset() {

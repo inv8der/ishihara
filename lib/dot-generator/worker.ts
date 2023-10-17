@@ -1,18 +1,33 @@
-/* eslint-disable no-restricted-globals */
-
 import { kdTree } from 'kd-tree-javascript'
 import type { Point } from '../types'
 
-type Circle = {
-  cx: number
-  cy: number
-  radius: number
+interface StartCommand {
+  command: 'start'
+  args: Parameters<typeof generatePlate>
 }
+
+export type WorkerCommand = StartCommand
+
+interface FinishEvent {
+  type: 'finish'
+  data: Point[]
+}
+
+interface UpdateEvent {
+  type: 'update'
+  data: Point[]
+}
+
+export type WorkerEvent = UpdateEvent | FinishEvent
 
 function generateRandomPoint(options: {
   minRadius: number
   maxRadius: number
-  bounds: Circle
+  bounds: {
+    cx: number
+    cy: number
+    radius: number
+  }
 }): Omit<Point, 'id'> {
   const { minRadius, maxRadius, bounds } = options
 
@@ -76,14 +91,12 @@ function* generatePlate(options: {
 }
 
 self.onmessage = async function (e: MessageEvent) {
-  const { command, args } = e.data
+  const { command, args } = e.data as WorkerCommand
 
   switch (command) {
     case 'start': {
       const data = await new Promise<Point[]>((resolve) => {
-        const iterator = generatePlate(
-          ...(args as Parameters<typeof generatePlate>)
-        )
+        const iterator = generatePlate(...args)
 
         const points: Point[] = []
         for (const value of iterator) {
