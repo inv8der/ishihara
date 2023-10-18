@@ -1,5 +1,5 @@
 import Color from 'colorjs.io'
-import { generateConfusionLines, isPointInImage } from '../utils'
+import { randomInt, generateConfusionLines, isPointInImage } from '../utils'
 import type { Point } from '../types'
 import * as brettel from '../simulations/brettel'
 import * as shapes from '../shapes'
@@ -82,7 +82,7 @@ export default class IshiharaPlate {
 
   public setColors(mode: 'deutan' | 'tritan' | 'protan') {
     const confusionLines = generateConfusionLines(mode)
-    const i = Math.round(Math.random() * (confusionLines.length - 1))
+    const i = randomInt(0, confusionLines.length - 1)
     const randomConfusionLine = confusionLines[i]
 
     const generatedColors = new Map<number, [string, string]>()

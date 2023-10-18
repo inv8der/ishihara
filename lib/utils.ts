@@ -4,9 +4,13 @@ import type { Vector2D, Vector3D, Point } from './types'
 
 type ColorRange = ReturnType<typeof Color.range>
 
-export function roundToDecimal(value: number, decimal: number = 0): number {
-  // See https://expertcodeblog.wordpress.com/2018/02/12/typescript-javascript-round-number-by-decimal-pecision/
-  return Number(Math.round(Number(`${value}e${decimal}`)) + `e-${decimal}`)
+export function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+export function round(x: number, digits: number = 0): number {
+  // See https://expertcodeblog.wordpress.com/2018/02/12/typescript-javascript-round-number-by-decimal-pecision
+  return Number(Math.round(Number(`${x}e${digits}`)) + `e-${digits}`)
 }
 
 export function dotProduct(a: Vector3D, b: Vector3D): number {
@@ -58,9 +62,9 @@ export function findIntersection(
   const m1 = (line1[0][1] - line1[1][1]) / (line1[0][0] - line1[1][0])
   const m2 = (line2[0][1] - line2[1][1]) / (line2[0][0] - line2[1][0])
   const x =
-    (m2 * line2[0][0] - m1 * line1[1][0] + line1[1][1] - line2[0][1]) /
-    (m2 - m1)
-  const y = m2 * (x - line2[0][0]) + line2[0][1]
+    (m1 * line1[0][0] - m2 * line2[0][0] - line1[0][1] + line2[0][1]) /
+    (m1 - m2)
+  const y = m1 * (x - line1[0][0]) + line1[0][1]
 
   return [x, y]
 }
@@ -72,15 +76,18 @@ export function generateConfusionLines(
   const green = new Color('#00ff00').to('xyz')
   const blue = new Color('#0000ff').to('xyz')
 
+  const interpolationSpace = 'srgb-linear'
   const redXY = XYZtoXY(red.coords)
   const blueXY = XYZtoXY(blue.coords)
 
+  let bounds
   let startColorRange
   let createConfusionLine
 
   switch (type) {
     case 'deutan': {
-      startColorRange = blue.range(green, { space: 'xyz' })
+      bounds = [0.2, 1]
+      startColorRange = blue.range(green, { space: interpolationSpace })
       createConfusionLine = (color: Color) => {
         const colorXY = XYZtoXY(color.to('xyz').coords)
         const [x, y] = findIntersection(
@@ -88,14 +95,15 @@ export function generateConfusionLines(
           [colorXY, CopunctalPoint.DEUTAN]
         )
         return color.range(new Color('xyz', XYtoXYZ([x, y])), {
-          space: 'xyz',
+          space: interpolationSpace,
         })
       }
       break
     }
 
     case 'protan': {
-      startColorRange = blue.range(green, { space: 'xyz' })
+      bounds = [0.15, 1]
+      startColorRange = blue.range(green, { space: interpolationSpace })
       createConfusionLine = (color: Color) => {
         const colorXY = XYZtoXY(color.to('xyz').coords)
         const [x, y] = findIntersection(
@@ -103,14 +111,15 @@ export function generateConfusionLines(
           [colorXY, CopunctalPoint.PROTAN]
         )
         return color.range(new Color('xyz', XYtoXYZ([x, y])), {
-          space: 'xyz',
+          space: interpolationSpace,
         })
       }
       break
     }
 
     case 'tritan': {
-      startColorRange = green.range(red, { space: 'xyz' })
+      bounds = [0, 0.9]
+      startColorRange = green.range(red, { space: interpolationSpace })
       createConfusionLine = (color: Color) => {
         const colorXY = XYZtoXY(color.to('xyz').coords)
         const [x, y] = findIntersection(
@@ -118,24 +127,24 @@ export function generateConfusionLines(
           [colorXY, CopunctalPoint.TRITAN]
         )
         return color.range(new Color('xyz', XYtoXYZ([x, y])), {
-          space: 'xyz',
-          outputSpace: 'srgb',
+          space: interpolationSpace,
         })
       }
       break
     }
   }
 
-  const numLines = 10
+  // Assuming bounds of [0, 1] and a step of 0.1, we'll end up with 11 lines
+  // as we want to include both the lower and upper bounds
+  const numLines = 11
   const confusionLines = []
-  const bounds = [0.1, 0.9]
-  const step = roundToDecimal((bounds[1] - bounds[0]) / numLines, 4)
+  const step = round((bounds[1] - bounds[0]) / (numLines - 1), 4)
   let percentage = bounds[0]
 
   for (let i = 0; i < numLines; i += 1) {
     const startColor = startColorRange(percentage)
     confusionLines.push(createConfusionLine(startColor))
-    percentage = roundToDecimal(percentage + step, 4)
+    percentage = Math.min(round(percentage + step, 4), bounds[1])
   }
 
   return confusionLines
