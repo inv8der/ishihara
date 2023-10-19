@@ -26,7 +26,7 @@ const config = {
     ecmaVersion: 'latest',
     sourceType: 'module',
     project: typeCheckingEnabled
-      ? [('./tsconfig.json', './tsconfig.node.json')]
+      ? ['./tsconfig.json', './tsconfig.node.json']
       : undefined,
     tsconfigRootDir: __dirname,
   },
