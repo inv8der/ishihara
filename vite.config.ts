@@ -12,8 +12,8 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      // make sure to externalize deps that shouldn't be bundled into your library
-      external: ['react', 'react-dom'],
+      // Make sure to externalize deps that shouldn't be bundled into your library
+      external: ['colorjs.io', 'kd-tree-javascript'],
     },
     outDir: './dist',
   },
