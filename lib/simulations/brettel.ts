@@ -80,7 +80,7 @@ function brettel(
   rgb: string | ColorCoords,
   type: 'protan' | 'deutan' | 'tritan',
   severity: number
-) {
+): ColorCoords {
   // Go from sRGB to linearRGB
   const color = toColor(rgb)
   const linearRGB = color.to('srgb-linear').coords

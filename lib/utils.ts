@@ -2,18 +2,18 @@ import Color from 'colorjs.io'
 import { CopunctalPoint, RED_XYY, GREEN_XYY, BLUE_XYY } from './constants'
 import type { Vector2D, Vector3D, Point } from './types'
 
-type ColorRange = ReturnType<typeof Color.range>
+type ColorRange = (percentage: number) => string
 
 export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-export function round(x: number, digits: number = 0): number {
+export function round(x: number, digits = 0): number {
   // See https://expertcodeblog.wordpress.com/2018/02/12/typescript-javascript-round-number-by-decimal-pecision
   return Number(Math.round(Number(`${x}e${digits}`)) + `e-${digits}`)
 }
 
-export function clamp(x: number, min: number, max: number) {
+export function clamp(x: number, min: number, max: number): number {
   return Math.min(Math.max(x, min), max)
 }
 
@@ -98,9 +98,11 @@ export function generateConfusionLines(
           [blueXY, redXY],
           [colorXY, CopunctalPoint.DEUTAN]
         )
-        return color.range(new Color('xyz', XYtoXYZ([x, y])), {
+        const colorRange = color.range(new Color('xyz', XYtoXYZ([x, y])), {
           space: interpolationSpace,
         })
+        return (percentage: number): string =>
+          colorRange(percentage).to('srgb').toString()
       }
       break
     }
@@ -114,9 +116,11 @@ export function generateConfusionLines(
           [blueXY, redXY],
           [colorXY, CopunctalPoint.PROTAN]
         )
-        return color.range(new Color('xyz', XYtoXYZ([x, y])), {
+        const colorRange = color.range(new Color('xyz', XYtoXYZ([x, y])), {
           space: interpolationSpace,
         })
+        return (percentage: number): string =>
+          colorRange(percentage).to('srgb').toString()
       }
       break
     }
@@ -130,9 +134,11 @@ export function generateConfusionLines(
           [blueXY, redXY],
           [colorXY, CopunctalPoint.TRITAN]
         )
-        return color.range(new Color('xyz', XYtoXYZ([x, y])), {
+        const colorRange = color.range(new Color('xyz', XYtoXYZ([x, y])), {
           space: interpolationSpace,
         })
+        return (percentage: number): string =>
+          colorRange(percentage).to('srgb').toString()
       }
       break
     }

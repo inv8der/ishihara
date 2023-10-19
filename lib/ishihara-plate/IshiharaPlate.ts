@@ -75,7 +75,7 @@ export default class IshiharaPlate {
 
       return {
         ...point,
-        color: color.toString({ space: 'srgb' }),
+        color: color.toString(),
       }
     })
   }
@@ -89,8 +89,8 @@ export default class IshiharaPlate {
 
     this._transforms.set('color', (point) => {
       const [onColor, offColor] = generatedColors.get(point.id) ?? [
-        randomConfusionLine(Math.random() * 0.5).toString(),
-        randomConfusionLine(0.5 + Math.random() * 0.5).toString(),
+        randomConfusionLine(Math.random() * 0.5),
+        randomConfusionLine(0.5 + Math.random() * 0.5),
       ]
 
       generatedColors.set(point.id, [onColor, offColor])

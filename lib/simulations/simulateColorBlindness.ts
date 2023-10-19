@@ -3,11 +3,11 @@ import { clamp } from '../utils'
 import brettel from './brettel'
 
 export default function simulateColorBlindness(
-  color: string | Color,
+  color: string,
   type: 'deutan' | 'protan' | 'tritan',
   severity: number
-): Color {
+): string {
   const c = new Color(color).to('srgb')
   c.coords = brettel(c.coords, type, clamp(severity, 0, 1))
-  return c
+  return c.toString()
 }
