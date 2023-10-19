@@ -13,6 +13,10 @@ export function round(x: number, digits: number = 0): number {
   return Number(Math.round(Number(`${x}e${digits}`)) + `e-${digits}`)
 }
 
+export function clamp(x: number, min: number, max: number) {
+  return Math.min(Math.max(x, min), max)
+}
+
 export function dotProduct(a: Vector3D, b: Vector3D): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }

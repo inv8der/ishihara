@@ -22,8 +22,6 @@ interface BrettelParams {
 
 type ColorCoords = [number, number, number]
 
-type ColorTransform = (rgb: string | ColorCoords) => ColorCoords
-
 // https://github.com/DaltonLens/libDaltonLens
 const brettelParamsByType: Record<
   'protan' | 'deutan' | 'tritan',
@@ -126,11 +124,14 @@ function brettel(
   return simulatedColor.to('srgb').coords
 }
 
-export const normal: ColorTransform = (rgb) => toColor(rgb).coords
-export const protanopia: ColorTransform = (rgb) => brettel(rgb, 'protan', 1.0)
-export const protanomaly: ColorTransform = (rgb) => brettel(rgb, 'protan', 0.6)
-export const deuteranopia: ColorTransform = (rgb) => brettel(rgb, 'deutan', 1.0)
-export const deuteranomaly: ColorTransform = (rgb) =>
+brettel.normal = (rgb: string | ColorCoords) => toColor(rgb).coords
+brettel.protanopia = (rgb: string | ColorCoords) => brettel(rgb, 'protan', 1.0)
+brettel.protanomaly = (rgb: string | ColorCoords) => brettel(rgb, 'protan', 0.6)
+brettel.deuteranopia = (rgb: string | ColorCoords) =>
+  brettel(rgb, 'deutan', 1.0)
+brettel.deuteranomaly = (rgb: string | ColorCoords) =>
   brettel(rgb, 'deutan', 0.6)
-export const tritanopia: ColorTransform = (rgb) => brettel(rgb, 'tritan', 1.0)
-export const tritanomaly: ColorTransform = (rgb) => brettel(rgb, 'tritan', 0.6)
+brettel.tritanopia = (rgb: string | ColorCoords) => brettel(rgb, 'tritan', 1.0)
+brettel.tritanomaly = (rgb: string | ColorCoords) => brettel(rgb, 'tritan', 0.6)
+
+export default brettel

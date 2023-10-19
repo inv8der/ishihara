@@ -1,7 +1,7 @@
 import Color from 'colorjs.io'
 import { randomInt, generateConfusionLines, isPointInImage } from '../utils'
 import type { Point } from '../types'
-import * as brettel from '../simulations/brettel'
+import { brettel } from '../simulations'
 import * as shapes from '../shapes'
 
 type Transform = (p: Point) => Point
