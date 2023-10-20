@@ -74,7 +74,8 @@ export function findIntersection(
 }
 
 export function generateConfusionLines(
-  type: 'deutan' | 'protan' | 'tritan'
+  type: 'deutan' | 'protan' | 'tritan',
+  amount = 11
 ): ColorRange[] {
   const red = new Color('#ff0000').to('xyz')
   const green = new Color('#00ff00').to('xyz')
@@ -144,14 +145,14 @@ export function generateConfusionLines(
     }
   }
 
-  // Assuming bounds of [0, 1] and a step of 0.1, we'll end up with 11 lines
-  // as we want to include both the lower and upper bounds
-  const numLines = 11
+  // Assuming a bounds of [0, 1] and step of 0.1, we should end up with 11 lines
+  // since both the lower and upper bounds are included. Therefore, to calculate
+  // step we need divide by amount - 1, which in this example is 10
   const confusionLines = []
-  const step = round((bounds[1] - bounds[0]) / (numLines - 1), 4)
+  const step = round((bounds[1] - bounds[0]) / (amount - 1), 4)
   let percentage = bounds[0]
 
-  for (let i = 0; i < numLines; i += 1) {
+  for (let i = 0; i < amount; i += 1) {
     const startColor = startColorRange(percentage)
     confusionLines.push(createConfusionLine(startColor))
     percentage = Math.min(round(percentage + step, 4), bounds[1])
