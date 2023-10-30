@@ -23,7 +23,8 @@
   },
   "dependencies": {
     "colorjs.io": "^0.4.5",
-    "kd-tree-javascript": "^1.0.3"
+    "kd-tree-javascript": "^1.0.3",
+    "mathjs": "^11.11.2"
   },
   "devDependencies": {
     "@types/eslint": "^8.44.3",

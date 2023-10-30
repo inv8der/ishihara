@@ -1,21 +1,11 @@
 import Color from 'colorjs.io'
-import { randomInt, generateConfusionLines, isPointInImage } from '../utils'
+import math from '../math'
+import { generateConfusionLines, simulateColorBlindness } from '../color-vision'
 import type { Point } from '../types'
-import { brettel } from '../simulations'
 import * as shapes from '../shapes'
 
 type Transform = (p: Point) => Point
-
-type DeficiencyType =
-  | 'normal'
-  | 'protanopia'
-  | 'protanomaly'
-  | 'deuteranopia'
-  | 'deuteranomaly'
-  | 'tritanopia'
-  | 'tritanomaly'
-  | 'achromatopsia'
-  | 'achromatomaly'
+// type DeficiencyType = 'deutan' | 'tritan' | 'protan'
 
 export default class IshiharaPlate {
   private _width: number
@@ -29,83 +19,92 @@ export default class IshiharaPlate {
     ['filter', null],
   ])
 
-  public get width() {
-    return this._width
-  }
-
-  public get height() {
-    return this._height
-  }
-
-  public get dots() {
-    return this._dots
-  }
-
-  public set dots(dots: Point[]) {
-    this._dots = dots.map((point) => ({ ...point }))
-  }
-
   constructor(width: number, height: number, dots: Point[] = []) {
     this._width = width
     this._height = height
     this.dots = dots
   }
 
-  public simulateColorBlindness(type: DeficiencyType) {
+  get width() {
+    return this._width
+  }
+
+  get height() {
+    return this._height
+  }
+
+  get dots() {
+    return this._dots
+  }
+
+  set dots(dots: Point[]) {
+    this._dots = dots.map((point) => ({ ...point }))
+  }
+
+  private _isPointInImage(point: Point): boolean {
+    const image = this._imageData
+
+    if (!image) {
+      return false
+    }
+
+    for (let i = 0; i <= point.radius; i++) {
+      for (let r = 0; r <= point.radius; r++) {
+        const x = point.x + Math.cos(i * Math.PI * 2) * r
+        const y = point.y + Math.sin(i * Math.PI * 2) * r
+
+        const index = (Math.floor(y) * image.width + Math.floor(x)) * 4
+
+        const red = image.data[index]
+        const green = image.data[index + 1]
+        const blue = image.data[index + 2]
+        const alpha = image.data[index + 3]
+
+        if ((red + green + blue) * (alpha / 255) < 127) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  simulateColorBlindness(type: 'deutan' | 'tritan' | 'protan', severity = 1) {
     this._transforms.set('filter', (point) => {
       const color = new Color(point.color ?? '#000000').to('srgb')
-      let transform = brettel.normal
-
-      switch (type) {
-        case 'protanopia':
-        case 'protanomaly':
-        case 'deuteranopia':
-        case 'deuteranomaly':
-        case 'tritanopia':
-        case 'tritanomaly':
-          transform = brettel[type]
-          break
-
-        case 'achromatopsia':
-        case 'achromatomaly':
-          break
-      }
-
-      color.coords = transform(color.coords)
+      color.coords = simulateColorBlindness(color.coords, type, severity)
 
       return {
         ...point,
-        color: color.toString(),
+        color: color.toString({ format: 'hex' }),
       }
     })
   }
 
-  public setColors(mode: 'deutan' | 'tritan' | 'protan') {
+  setColors(mode: 'deutan' | 'tritan' | 'protan') {
     const confusionLines = generateConfusionLines(mode)
-    const i = randomInt(0, confusionLines.length - 1)
+    // Generates a random integer between 0 (inclusive) and confusionLines.length (exclusive)
+    const i = math.randomInt(0, confusionLines.length)
     const randomConfusionLine = confusionLines[i]
 
     const generatedColors = new Map<number, [string, string]>()
 
     this._transforms.set('color', (point) => {
       const [onColor, offColor] = generatedColors.get(point.id) ?? [
-        randomConfusionLine(Math.random() * 0.5),
-        randomConfusionLine(0.5 + Math.random() * 0.5),
+        randomConfusionLine(0.8 + Math.random() * 0.2),
+        randomConfusionLine(0 + Math.random() * 0.2),
       ]
 
       generatedColors.set(point.id, [onColor, offColor])
 
       return {
         ...point,
-        color:
-          this._imageData && isPointInImage(this._imageData, point)
-            ? onColor
-            : offColor,
+        color: this._isPointInImage(point) ? onColor : offColor,
       }
     })
   }
 
-  public addShape(shape: 'circle' | 'square' | 'triangle') {
+  addShape(shape: 'circle' | 'square' | 'triangle') {
     const image = shapes[shape]
     const ratio = Math.min(this.width / image.width, this.height / image.height)
     const scaledImageWidth = image.width * ratio
@@ -133,13 +132,13 @@ export default class IshiharaPlate {
     }
   }
 
-  public reset() {
+  reset() {
     this._transforms.set('color', null)
     this._transforms.set('filter', null)
     this._imageData = null
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D) {
     ctx.clearRect(0, 0, this.width, this.height)
 
     this._dots.forEach((p) => {

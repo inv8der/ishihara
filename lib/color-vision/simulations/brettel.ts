@@ -1,6 +1,6 @@
 import Color from 'colorjs.io'
-import { clamp, dotProduct } from '../utils'
-import type { Vector3D } from '../types'
+import math from '../../math'
+import type { Vector3D } from '../../types'
 
 // const simulations = {
 //   normal: (v) => v,
@@ -89,9 +89,7 @@ function brettel(
   const { separationPlaneNormal, projection1, projection2 } =
     brettelParamsByType[type]
   const projection =
-    dotProduct(linearRGB, separationPlaneNormal) >= 0
-      ? projection1
-      : projection2
+    math.dot(linearRGB, separationPlaneNormal) >= 0 ? projection1 : projection2
 
   // Transform to the full dichromat projection plane.
   const simulatedColor = new Color('srgb-linear', [0, 0, 0])
@@ -123,7 +121,7 @@ function brettel(
   // Convert back to sRGB, clamping any values not in gamut
   return simulatedColor
     .to('srgb')
-    .coords.map((v) => clamp(v, 0, 1)) as ColorCoords
+    .coords.map((v) => math.clip(v, 0, 1)) as ColorCoords
 }
 
 brettel.normal = (rgb: string | ColorCoords) => toColor(rgb).coords
