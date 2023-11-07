@@ -2,31 +2,38 @@ import math from '../../math'
 import Vector, { dot } from '../utils/vector'
 import HashSet from '../utils/hashset'
 import Point from './point'
-import GeoBody from './body'
 import Polygon from './polygon'
-import Pyramid from './pyramid'
 import Segment from './segment'
 
-function getCenterPoint(points: Point[]): Point {
-  let [x, y, z] = [0, 0, 0]
-  const numPoints = points.length
-  for (const point of points) {
-    x += point.x
-    y += point.y
-    z += point.z
+class Pyramid {
+  public polygon: Polygon
+  public point: Point
+
+  constructor(polygon: Polygon, point: Point) {
+    this.polygon = polygon
+    this.point = point
+
+    if (this.polygon.plane.contains(this.point)) {
+      throw new Error('Cannot create Pyramid with point on the polygon plane')
+    }
   }
-  return new Point(x / numPoints, y / numPoints, z / numPoints)
+
+  height() {
+    /** return the height of the pyramid */
+    const p0 = this.polygon.vertices[0]
+    return Math.abs(
+      dot(new Vector(p0, this.point), this.polygon.plane.normal.normalized())
+    )
+  }
+
+  volume() {
+    /** return the volume of the pryamid */
+    const h = this.height()
+    return (1 / 3) * h * this.polygon.area()
+  }
 }
 
-// function facesOutward(polygon: Polygon, center: Point): boolean {
-//   const check = dot(
-//     new Vector(center, polygon.plane.position),
-//     polygon.plane.normal
-//   )
-//   return math.larger(check, 0) as boolean
-// }
-
-export default class Polyhedron implements GeoBody {
+export default class Polyhedron {
   /**
    * **Input:**
    * - convex_polygons: tuple of ConvexPolygons
@@ -92,6 +99,7 @@ export default class Polyhedron implements GeoBody {
 
   constructor(polygons: Polygon[]) {
     this.polygons = polygons.map((polygon) => polygon.clone())
+    this._sortPolygons()
 
     const pointSet = new HashSet<Point>()
     const segmentSet = new HashSet<Segment>()
@@ -109,7 +117,7 @@ export default class Polyhedron implements GeoBody {
 
     this.vertices = Array.from(pointSet)
     this.segments = Array.from(segmentSet)
-    this.center = getCenterPoint(this.vertices)
+    this.center = this._getCenterPoint()
 
     for (let i = 0; i < this.polygons.length; i += 1) {
       // Check if the normal if facing inwards, and if so, reverse it
@@ -137,6 +145,30 @@ export default class Polyhedron implements GeoBody {
     }
   }
 
+  private _getCenterPoint() {
+    let [x, y, z] = [0, 0, 0]
+    const numPoints = this.vertices.length
+    for (const point of this.vertices) {
+      x += point.x
+      y += point.y
+      z += point.z
+    }
+    return new Point(x / numPoints, y / numPoints, z / numPoints)
+  }
+
+  private _sortPolygons() {
+    this.polygons = this.polygons.sort((a, b) => {
+      if (a.center.z === b.center.z) {
+        if (a.center.y === b.center.y) {
+          return a.center.x - b.center.x
+        } else {
+          return a.center.y - b.center.y
+        }
+      }
+      return a.center.z - b.center.z
+    })
+  }
+
   private _checkEuler() {
     const numVertices = this.vertices.length
     const numSegments = this.segments.length
@@ -156,6 +188,18 @@ export default class Polyhedron implements GeoBody {
       }
     }
     return true
+  }
+
+  equals(other: Polyhedron): boolean {
+    return this.polygons.every((_, i) =>
+      this.polygons[i].equals(other.polygons[i])
+    )
+  }
+
+  getHashCode(): string {
+    return btoa(
+      ['Polyhedron', ...this.polygons.map((p) => p.getHashCode()).sort()].join()
+    )
   }
 
   contains(other: Point | Segment | Polygon): boolean {
@@ -180,16 +224,7 @@ export default class Polyhedron implements GeoBody {
     return false
   }
 
-  // equals(other) {
-  //   if (other instanceof Polyhedron) {
-  //     return hash(self) == hash(other)
-  //   } else {
-  //     return false
-  //   }
-  // }
-
   translate(offset: Vector): Polyhedron {
-    /** Return the ConvexPolyhedron that you get when you move self by vector v, self is also moved */
     this.polygons.forEach((polygon) => {
       polygon.translate(offset)
     })
@@ -209,7 +244,7 @@ export default class Polyhedron implements GeoBody {
 
     this.vertices = Array.from(pointSet)
     this.segments = Array.from(segmentSet)
-    this.center = getCenterPoint(this.vertices)
+    this.center = this._getCenterPoint()
 
     for (let i = 0; i < this.polygons.length; i += 1) {
       const polygon = this.polygons[i]
@@ -235,38 +270,8 @@ export default class Polyhedron implements GeoBody {
       )
     }
 
-    return new Polyhedron(this.polygons)
+    return this
   }
-
-  // _get_polygon_hash_sum() {
-  //   /** return the sum of hash value of all the ConvexPolygons */
-  //   let hash_sum = 0
-  //   for (const polygon of this.polygons) {
-  //     hash_sum += hash(polygon)
-  //   }
-  //   return hash_sum
-  // }
-
-  // _get_point_hash_sum() {
-  //   /** return the sum of hash value of all the points */
-  //   let hash_sum = 0
-  //   for (const point in this.point_set) {
-  //     hash_sum += hash(point)
-  //   }
-  //   return hash_sum
-  // }
-
-  // the hash function is not accurate
-  // in some extreme case, this function may fail
-  // which means it's vulnerable to attacks.
-  // __hash__() {
-  //   /** return the hash value of the ConvexPolyhedron */
-  //   return hash(
-  //     ('Polyhedron',
-  //     round(this._get_polygon_hash_sum(), SIG_FIGURES),
-  //     round(this._get_point_hash_sum(), SIG_FIGURES))
-  //   )
-  // }
 
   length() {
     /** return the total length of the polyhedron */
@@ -293,5 +298,43 @@ export default class Polyhedron implements GeoBody {
       volume += pyramid.volume()
     }
     return volume
+  }
+}
+
+export class Parallelepiped extends Polyhedron {
+  constructor(origin: Point, v1: Vector, v2: Vector, v3: Vector) {
+    if (v1.length() == 0 || v2.length() == 0 || v3.length() == 0) {
+      throw new Error("The length for the three vectors shouldn't be zero")
+    } else if (v1.parallel(v2) || v1.parallel(v3) || v2.parallel(v3)) {
+      throw new Error("The three vectors shouldn't be parallel to each other")
+    }
+
+    const diagonal = origin.clone().translate(v1).translate(v2).translate(v3)
+    const rectangle0 = Polygon.Parallelogram(origin, v1, v2)
+    const rectangle1 = Polygon.Parallelogram(origin, v2, v3)
+    const rectangle2 = Polygon.Parallelogram(origin, v1, v3)
+    const rectangle3 = Polygon.Parallelogram(
+      diagonal,
+      v1.clone().negate(),
+      v2.clone().negate()
+    )
+    const rectangle4 = Polygon.Parallelogram(
+      diagonal,
+      v2.clone().negate(),
+      v3.clone().negate()
+    )
+    const rectangle5 = Polygon.Parallelogram(
+      diagonal,
+      v1.clone().negate(),
+      v3.clone().negate()
+    )
+    super([
+      rectangle0,
+      rectangle1,
+      rectangle2,
+      rectangle3,
+      rectangle4,
+      rectangle5,
+    ])
   }
 }

@@ -1,21 +1,29 @@
 import math from '../../math'
 import Vector, { dot, cross, subtract } from '../utils/vector'
-import {
-  intersectPlaneSegment,
-  intersectPlanePlane,
-  intersectPlanePolygon,
-  intersectPlanePolyhedron,
-  intersectLinePlane,
-  intersectPointPlane,
-} from '../utils/intersection'
 import Point from './point'
-import GeoBody from './body'
 import Line from './line'
 import Polygon from './polygon'
-import Polyhedron from './polyhedron'
 import Segment from './segment'
 
-export default class Plane implements GeoBody {
+export default class Plane {
+  static xyPlane() {
+    /** return xy plane which is a Plane */
+    return new Plane(Point.origin(), Vector.zUnitVector())
+  }
+
+  static yzPlane() {
+    /** return yz plane which is a Plane */
+    return new Plane(Point.origin(), Vector.xUnitVector())
+  }
+
+  static xzPlane() {
+    /** return xz plane which is a Plane */
+    return new Plane(Point.origin(), Vector.yUnitVector())
+  }
+
+  position: Point
+  normal: Vector
+
   /**
    * - Plane(Point, Point, Point):
    * Initialise a plane going through the three given points.
@@ -32,25 +40,6 @@ export default class Plane implements GeoBody {
    * Initialise a plane given by the equation
    * ax1 + bx2 + cx3 = d (general form).
    */
-
-  public position: Point
-  public normal: Vector
-
-  static xy_plane() {
-    /** return xy plane which is a Plane */
-    return new Plane(Point.origin(), Vector.z_unit_vector())
-  }
-
-  static yz_plane() {
-    /** return yz plane which is a Plane */
-    return new Plane(Point.origin(), Vector.x_unit_vector())
-  }
-
-  static xz_plane() {
-    /** return xz plane which is a Plane */
-    return new Plane(Point.origin(), Vector.y_unit_vector())
-  }
-
   constructor(p1: Point, p2: Point, p3: Point)
   constructor(p: Point, v1: Vector, v2: Vector)
   constructor(p: Point, normal: Vector)
@@ -94,13 +83,24 @@ export default class Plane implements GeoBody {
     return other.contains(this.position) && this.normal.parallel(other.normal)
   }
 
+  getHashCode(): string {
+    return btoa(
+      [
+        'Plane',
+        math.round(this.normal[0], 6),
+        math.round(this.normal[1], 6),
+        math.round(this.normal[2], 6),
+        math.round(dot(this.normal, this.position.pv()), 6),
+      ].join()
+    )
+  }
+
+  clone(): Plane {
+    return new Plane(this.position, this.normal)
+  }
+
   contains(other: Point | Segment | Line | Polygon): boolean {
-    /**
-     * Checks if a Point lies on the Plane or a Line is a subset of
-     * the plane.
-     */
     if (other instanceof Point) {
-      // return math.equal(other.pv() * this.n - this.p.pv() * this.n, 0)
       return math.equal(
         dot(other.pv(), this.normal) - dot(this.position.pv(), this.normal),
         0
@@ -111,55 +111,28 @@ export default class Plane implements GeoBody {
       return this.contains(new Point(other.position)) && this.parallel(other)
     } else if (other instanceof Polygon) {
       return this.equals(other.plane)
-    } else {
-      throw new Error('Not implemented')
     }
+
+    return false
   }
 
-  translate(offset: Vector) {
+  translate(offset: Vector): Plane {
     this.position.translate(offset)
     return this
   }
 
-  negate() {
+  negate(): Plane {
     this.normal.negate()
     return this
   }
 
   parallel(other: Line | Plane): boolean {
-    /**
-     * **Input:**
-     * - a:Line/Plane/Plane/Vector
-     * - b:Line/Line/Plane/Vector
-     *
-     * **Output:*
-     * A boolean of whether the two objects are parallel. This can check
-     * - Line/Line
-     * - Plane/Line
-     * - Plane/Plane
-     * - Vector/Vector
-     */
-
     if (other instanceof Line) {
       return other.direction.orthogonal(this.normal)
-    } else {
+    } else if (other instanceof Plane) {
       return other.normal.parallel(this.normal)
     }
-  }
 
-  intersection(other: unknown): unknown {
-    if (other instanceof Point) {
-      return intersectPointPlane(other, this)
-    } else if (other instanceof Segment) {
-      return intersectPlaneSegment(this, other)
-    } else if (other instanceof Line) {
-      return intersectLinePlane(other, this)
-    } else if (other instanceof Plane) {
-      return intersectPlanePlane(this, other)
-    } else if (other instanceof Polygon) {
-      return intersectPlanePolygon(this, other)
-    } else if (other instanceof Polyhedron) {
-      return intersectPlanePolyhedron(this, other)
-    }
+    return false
   }
 }

@@ -2,6 +2,15 @@ import math from '../../math'
 import Vector from '../utils/vector'
 
 export default class Point {
+  static origin() {
+    /** Returns the Point (0 | 0 | 0) */
+    return new Point(0, 0, 0)
+  }
+
+  x: number
+  y: number
+  z: number
+
   /**
    * - Point(a, b, c)
    * - Point([a, b, c]):
@@ -12,15 +21,6 @@ export default class Point {
    * vector. If the vector has coordinates (a | b | c), the point
    * will have the coordinates (a | b | c) (as easy as pi).
    */
-  static origin() {
-    /** Returns the Point (0 | 0 | 0) */
-    return new Point(0, 0, 0)
-  }
-
-  public x: number
-  public y: number
-  public z: number
-
   constructor(x: number, y: number, z: number)
   constructor(coords: [number, number, number])
   constructor(vector: Vector)
@@ -40,18 +40,6 @@ export default class Point {
     ;[this.x, this.y, this.z] = coords
   }
 
-  // __hash__() {
-  //     """return the hash of a point"""
-  //     return hash(("Point",
-  //     round(self.x,get_sig_figures()),
-  //     round(self.y,get_sig_figures()),
-  //     round(self.z,get_sig_figures()),
-  //     round(self.x,get_sig_figures()) * round(self.y,get_sig_figures()),
-  //     round(self.x,get_sig_figures()) * round(self.z,get_sig_figures()),
-  //     round(self.y,get_sig_figures()) * round(self.z,get_sig_figures()),
-  //     ))
-  // }
-
   equals(other: Point): boolean {
     /** Checks if two Points are equal. Always use == and not 'is'! */
     const result = math.equal(
@@ -59,33 +47,25 @@ export default class Point {
       [other.x, other.y, other.z]
     ) as unknown as [number, number, number]
 
-    // console.log(this, other, result)
-
     return result.every((bool) => bool)
+  }
 
-    // return (
-    //     (Math.abs(this.x - point.x) < get_eps()) &&
-    //     (Math.abs(this.y - point.y) < get_eps()) &&
-    //     (Math.abs(this.z - point.z) < get_eps())
-    // )
+  getHashCode() {
+    return btoa(
+      [
+        'Point',
+        math.round(this.x, 6),
+        math.round(this.y, 6),
+        math.round(this.z, 6),
+        math.round(this.x, 6) * math.round(this.y, 6),
+        math.round(this.x, 6) * math.round(this.z, 6),
+        math.round(this.y, 6) * math.round(this.z, 6),
+      ].join()
+    )
   }
 
   clone(): Point {
     return new Point(this.x, this.y, this.z)
-  }
-
-  pv(): Vector {
-    /** Return the position vector of the point. */
-    return new Vector(this.x, this.y, this.z)
-  }
-
-  move(vector: Vector) {
-    /** Return the point that you get when you move self by vector v, self is also moved */
-    this.x += vector[0]
-    this.y += vector[1]
-    this.z += vector[2]
-
-    return this
   }
 
   translate(offset: Vector) {
@@ -94,6 +74,11 @@ export default class Point {
     this.z += offset[2]
 
     return this
+  }
+
+  pv(): Vector {
+    /** Return the position vector of the point. */
+    return new Vector(this.x, this.y, this.z)
   }
 
   distance(point: Point): number {

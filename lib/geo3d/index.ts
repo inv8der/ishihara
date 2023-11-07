@@ -1,3 +1,5 @@
+// https://github.com/GouMinghao/Geometry3D/tree/master
+
 export { default as Polyhedron } from './geometry/polyhedron'
 export { default as Line } from './geometry/line'
 export { default as Segment } from './geometry/segment'

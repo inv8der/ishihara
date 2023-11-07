@@ -245,7 +245,7 @@ export function intersectPlanePlane(a: Plane, b: Plane): Plane | Line | null {
     // intersectLinePlane returns a Line, which causes this function to return null
     return null
   } else {
-    const direction = a.normal.cross(b.normal).normalized()
+    const direction = cross(a.normal, b.normal).normalized()
     const auxillaryLine = new Line(
       a.position,
       cross(direction, a.normal).normalized()

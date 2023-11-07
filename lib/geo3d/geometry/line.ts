@@ -1,21 +1,9 @@
-import GeoBody from './body'
+import math from '../../math'
 import Point from './point'
 import Segment from './segment'
 import Vector, { subtract } from '../utils/vector'
 
-export default class Line implements GeoBody {
-  /**
-   * - Line(Point, Point):
-   * A Line going through both given points.
-   *
-   * - Line(Point, Vector):
-   * A Line going through the given point, in the direction pointed
-   * by the given Vector.
-   *
-   * - Line(Vector, Vector):
-   * The same as Line(Point, Vector), but with instead of the point
-   * only the position vector of the point is given.
-   */
+export default class Line {
   static xAxis() {
     /** return x axis which is a Line */
     return new Line(Point.origin(), new Point(1, 0, 0))
@@ -34,6 +22,18 @@ export default class Line implements GeoBody {
   position: Vector
   direction: Vector
 
+  /**
+   * - Line(Point, Point):
+   * A Line going through both given points.
+   *
+   * - Line(Point, Vector):
+   * A Line going through the given point, in the direction pointed
+   * by the given Vector.
+   *
+   * - Line(Vector, Vector):
+   * The same as Line(Point, Vector), but with instead of the point
+   * only the position vector of the point is given.
+   */
   constructor(p1: Point, p2: Point)
   constructor(point: Point, vector: Vector)
   constructor(v1: Vector, v2: Vector)
@@ -42,13 +42,38 @@ export default class Line implements GeoBody {
     this.position = a instanceof Point ? a.pv().clone() : a.clone()
     // We just take the vector AB as the direction vector
     this.direction =
-      b instanceof Point ? subtract(b.pv(), this.position) : b.clone()
+      b instanceof Point
+        ? subtract(b.pv(), this.position).normalized()
+        : b.clone().normalized()
 
     if (this.direction.equals(Vector.zero())) {
       throw new Error(
         'Line cannot be initialized with a direction vector of (0, 0, 0)'
       )
     }
+  }
+
+  equals(other: Line): boolean {
+    /** Checks if two lines are equal */
+    return (
+      this.contains(new Point(other.position)) &&
+      other.direction.parallel(this.direction)
+    )
+  }
+
+  getHashCode() {
+    return btoa(
+      [
+        'Line',
+        math.round(this.direction[0], 6),
+        math.round(this.direction[1], 6),
+        math.round(
+          this.direction[0] * this.position[1] -
+            this.direction[1] * this.position[0],
+          6
+        ),
+      ].join()
+    )
   }
 
   contains(other: Point | Segment): boolean {
@@ -61,22 +86,6 @@ export default class Line implements GeoBody {
     }
     return false
   }
-
-  equals(other: Line): boolean {
-    /** Checks if two lines are equal */
-    return (
-      this.contains(new Point(other.position)) &&
-      other.direction.parallel(this.direction)
-    )
-  }
-
-  // def __hash__(self):
-  //     """Return hash of a Line"""
-  //     return hash(("Line",
-  //     round(self.dv[0],SIG_FIGURES),
-  //     round(self.dv[1],SIG_FIGURES),
-  //     round(self.dv[0] * self.sv[1] - self.dv[1] * self.sv[0],SIG_FIGURES)
-  //     ))
 
   translate(offset: Vector): Line {
     this.position[0] += offset[0]

@@ -1,16 +1,4 @@
-// import math
-// from ..geometry.line import Line
-// from ..geometry.plane import Plane
-// from ..geometry.point import Point
-// from ..geometry.segment import Segment
-// from ..geometry.polygon import ConvexPolygon
-// from ..geometry.polyhedron import ConvexPolyhedron
-// from ..utils.solver import solve, null
-// from ..utils.vector import Vector
-
-// from .acute import acute
-// from .angle import angle, parallel, orthogonal
-// from .intersection import intersection
+import type Vector from '../utils/vector'
 
 // export default class GeoBody {
 //     /**
@@ -53,3 +41,19 @@ export default interface GeoBody {
   parallel(other: unknown): unknown
   orthogonal(other: unknown): unknown
 }
+
+// export interface Geometry {
+//   isPlane: boolean
+//   isPoint: boolean
+//   isLine: boolean
+//   isSegment: boolean
+//   isPolygon: boolean
+//   isPolyhedron: boolean
+
+//   contains(other: Geometry): boolean
+//   equals(other: Geometry): boolean
+//   getHashCode(): string
+
+//   translate(offset: Vector): Geometry
+//   clone(): Geometry
+// }

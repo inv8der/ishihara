@@ -5,6 +5,15 @@ export function dot(a: Vector, b: Vector): number {
   return math.dot(a.toArray(), b.toArray())
 }
 
+/**
+ * Calculates the cross product of two vectors, defined as
+ * _   _   / x2y3 - x3y2 \
+ * x × y = | x3y1 - x1y3 |
+ *         \ x1y2 - x2y1 /
+ *
+ * The cross product is orthogonal to both vectors and its length
+ * is the area of the parallelogram given by x and y.
+ */
 export function cross(a: Vector, b: Vector): Vector {
   const result = math.cross(a.toArray(), b.toArray()) as [
     number,
@@ -41,17 +50,17 @@ export default class Vector {
     return new Vector(0, 0, 0)
   }
 
-  static x_unit_vector() {
+  static xUnitVector() {
     /** Returns the unit vector (1 | 0 | 0) */
     return new Vector(1, 0, 0)
   }
 
-  static y_unit_vector() {
+  static yUnitVector() {
     /** Returns the unit vector (0 | 1 | 0) */
     return new Vector(0, 1, 0)
   }
 
-  static z_unit_vector() {
+  static zUnitVector() {
     /** Returns the unit vector (0 | 0 | 1) */
     return new Vector(0, 0, 1)
   }
@@ -102,63 +111,28 @@ export default class Vector {
     }
   }
 
-  // __hash__(self) {
-  //     /** return the hash of a vector */
-  //     return hash(("Vector",
-  //     round(self._v[0],get_sig_figures()),
-  //     round(self._v[1],get_sig_figures()),
-  //     round(self._v[2],get_sig_figures()),
-  //     round(self._v[0],get_sig_figures()) * round(self._v[1],get_sig_figures()),
-  //     round(self._v[1],get_sig_figures()) * round(self._v[2],get_sig_figures()),
-  //     round(self._v[2],get_sig_figures()) * round(self._v[0],get_sig_figures()),
-  //     ))
-  // }
-
   equals(vector: Vector): boolean {
-    // @todo configure epsilon
     const result = math.equal(this.v, vector.v) as unknown as [
       boolean,
       boolean,
       boolean,
     ]
     return result.every((bool) => bool)
-
-    // return (
-    //   Math.abs(this._v[0] - other._v[0]) < get_eps() &&
-    //   Math.abs(this._v[1] - other._v[1]) < get_eps() &&
-    //   Math.abs(this._v[2] - other._v[2]) < get_eps()
-    // )
   }
 
-  add(vector: Vector): Vector {
-    return new Vector(math.add(this.v, vector.v))
+  getHashCode() {
+    return btoa(
+      [
+        'Vector',
+        math.round(this[0], 6),
+        math.round(this[1], 6),
+        math.round(this[2], 6),
+        math.round(this[0], 6) * math.round(this[1], 6),
+        math.round(this[1], 6) * math.round(this[2], 6),
+        math.round(this[2], 6) * math.round(this[0], 6),
+      ].join()
+    )
   }
-
-  subtract(vector: Vector): Vector {
-    return new Vector(math.subtract(this.v, vector.v))
-  }
-
-  multiply(scalar: number): Vector
-  multiply(vector: Vector): number
-  multiply(scalarOrVector: number | Vector): Vector | number {
-    if (scalarOrVector instanceof Vector) {
-      return math.dot(this.v, scalarOrVector.v)
-    }
-    const result = math.multiply(this.v, scalarOrVector) as [
-      number,
-      number,
-      number,
-    ]
-    return new Vector(result)
-  }
-
-  //   __getitem__(item) {
-  //     return this._v[item]
-  //   }
-
-  //   __setitem__(item, value) {
-  //     this._v[item] = value
-  //   }
 
   *[Symbol.iterator]() {
     yield this.v[0]
@@ -166,34 +140,11 @@ export default class Vector {
     yield this.v[2]
   }
 
-  cross(vector: Vector): Vector {
-    /**
-     * Calculates the cross product of two vectors, defined as
-     * _   _   / x2y3 - x3y2 \
-     * x × y = | x3y1 - x1y3 |
-     *         \ x1y2 - x2y1 /
-     *
-     * The cross product is orthogonal to both vectors and its length
-     * is the area of the parallelogram given by x and y.
-     */
-
-    const result = math.cross(this.v, vector.v) as [number, number, number]
-    return new Vector(result)
-
-    // return new Vector(
-    //   a[1] * b[2] - a[2] * b[1],
-    //   a[2] * b[0] - a[0] * b[2],
-    //   a[0] * b[1] - a[1] * b[0]
-    // )
-  }
-
   length(): number {
     /** Returns |v|, the length of the vector. */
-    const product = this.multiply(this)
+    const product = dot(this, this)
     return product ** 0.5
   }
-
-  //   __abs__ = length
 
   parallel(vector: Vector): boolean {
     /** Returns true if both vectors are parallel. */
@@ -208,11 +159,6 @@ export default class Vector {
         this.length(),
       0
     ) as boolean
-
-    // return (
-    //   Math.abs(Math.abs(dot(this, vector)) - this.length() * vector.length()) <
-    //   get_eps() * this.length()
-    // )
   }
 
   orthogonal(vector: Vector): boolean {
@@ -232,7 +178,7 @@ export default class Vector {
      * pointing in the same direction but with length 1.
      */
     // Division is not defined, so we have to multiply by 1/|v|
-    return this.multiply(1 / this.length())
+    return multiply(this, 1 / this.length())
   }
 
   clone(): Vector {
