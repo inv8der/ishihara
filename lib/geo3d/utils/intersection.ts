@@ -1,10 +1,10 @@
+import math from '../../math'
 import Point from '../geometry/point'
 import Segment from '../geometry/segment'
 import Line from '../geometry/line'
 import Plane from '../geometry/plane'
 import Polygon from '../geometry/polygon'
 import Polyhedron from '../geometry/polyhedron'
-import { solve } from './solver'
 import Vector, { multiply, add, dot, cross } from './vector'
 import HashSet from './hashset'
 
@@ -101,25 +101,39 @@ export function intersectLineLine(a: Line, b: Line): Line | Point | null {
   if (a.equals(b)) {
     return a
   } else {
-    // For the line-line intersection, we have to solve:
-    //   s1 + λ u1 = t1 + μ v1
-    //   s2 + λ u2 = t2 + μ v2
-    //   s3 + λ u3 = t3 + μ v3
-    // Rearrange a bit, and you get...
-    const solution = solve([
-      [a.direction[0], -b.direction[0], b.position[0] - a.position[0]],
-      [a.direction[1], -b.direction[1], b.position[1] - a.position[1]],
-      [a.direction[2], -b.direction[2], b.position[2] - a.position[2]],
-    ])
-    // No intersection
-    if (solution.isSolvable()) {
+    try {
+      // For the line-line intersection, we have to solve:
+      //   s1 + λ u1 = t1 + μ v1
+      //   s2 + λ u2 = t2 + μ v2
+      //   s3 + λ u3 = t3 + μ v3
+      // Rearrange a bit, and you get this system of equations in the form Ax = B.
+      let A = [
+        [a.direction[0], -b.direction[0], 0],
+        [a.direction[1], -b.direction[1], 0],
+        [a.direction[2], -b.direction[2], 0],
+      ]
+      let B = [
+        b.position[0] - a.position[0],
+        b.position[1] - a.position[1],
+        b.position[2] - a.position[2],
+      ]
+
+      // Use bignumber for higher precision
+      A = math.map(A, (x) => math.bignumber(x))
+      B = math.map(B, (x) => math.bignumber(x))
+
+      // We can use math.lusolve to solve for x (the column vector containing λ and μ)
+      // Just need to pick one and plug it into the right equation.
+      const solution = math.map(math.lusolve(A, B), (x) => math.number(x))
+      const [lambda] = math.flatten(solution) as number[]
+
+      // Could've chosen b.sv + mu * b.dv instead, but it doesn't matter as they
+      // will point (pun intended) to the same point.
+      return new Point(add(a.position, multiply(lambda, a.direction)))
+    } catch (e) {
+      // No intersection
       return null
     }
-    // We get λ and μ, we need to pick one and plug it into the right equation
-    const [lambda] = solution.call()
-    // Could've chosen b.sv + mu * b.dv instead, but it doesn't matter as they
-    // will point (pun intended) to the same point.
-    return new Point(add(a.position, multiply(lambda, a.direction)))
   }
 }
 
