@@ -1,117 +1,33 @@
 import math from '../../math'
-import Vector, { dot } from '../utils/vector'
 import HashSet from '../utils/hashset'
-import Point from './point'
-import Polygon from './polygon'
-import Segment from './segment'
+import { Vector, dot, subtract } from '../utils/vector'
+import { Point } from './point'
+import { Polygon, Parallelogram } from './polygon'
+import { Segment } from './segment'
 
-class Pyramid {
-  public polygon: Polygon
-  public point: Point
-
-  constructor(polygon: Polygon, point: Point) {
-    this.polygon = polygon
-    this.point = point
-
-    if (this.polygon.plane.contains(this.point)) {
-      throw new Error('Cannot create Pyramid with point on the polygon plane')
-    }
-  }
-
-  height() {
-    /** return the height of the pyramid */
-    const p0 = this.polygon.vertices[0]
-    return Math.abs(
-      dot(new Vector(p0, this.point), this.polygon.plane.normal.normalized())
-    )
-  }
-
-  volume() {
-    /** return the volume of the pryamid */
-    const h = this.height()
-    return (1 / 3) * h * this.polygon.area()
-  }
-}
-
-export default class Polyhedron {
-  /**
-   * **Input:**
-   * - convex_polygons: tuple of ConvexPolygons
-   *
-   * **Output:**
-   * - ConvexPolyhedron
-   *
-   * The correctness of convex_polygons are checked According to Euler's formula.
-   * The normal of the convex polygons are checked and corrected which should be toward the outer direction
-   */
-
-  static Parallelepiped(origin: Point, v1: Vector, v2: Vector, v3: Vector) {
-    /**
-     * A special function for creating Parallelepiped
-     *
-     * **Input:**
-     * - base_point: a Point
-     * - v1, v2, v3: three Vectors
-     *
-     * **Output:**
-     * - A parallelepiped which is a ConvexPolyhedron instance.
-     **/
-    if (v1.length() == 0 || v2.length() == 0 || v3.length() == 0) {
-      throw new Error("The length for the three vectors shouldn't be zero")
-    } else if (v1.parallel(v2) || v1.parallel(v3) || v2.parallel(v3)) {
-      throw new Error("The three vectors shouldn't be parallel to each other")
-    } else {
-      const diagonal = origin.clone().translate(v1).translate(v2).translate(v3)
-      const rectangle0 = Polygon.Parallelogram(origin, v1, v2)
-      const rectangle1 = Polygon.Parallelogram(origin, v2, v3)
-      const rectangle2 = Polygon.Parallelogram(origin, v1, v3)
-      const rectangle3 = Polygon.Parallelogram(
-        diagonal,
-        v1.clone().negate(),
-        v2.clone().negate()
-      )
-      const rectangle4 = Polygon.Parallelogram(
-        diagonal,
-        v2.clone().negate(),
-        v3.clone().negate()
-      )
-      const rectangle5 = Polygon.Parallelogram(
-        diagonal,
-        v1.clone().negate(),
-        v3.clone().negate()
-      )
-      return new Polyhedron([
-        rectangle0,
-        rectangle1,
-        rectangle2,
-        rectangle3,
-        rectangle4,
-        rectangle5,
-      ])
-    }
-  }
-
+export class Polyhedron {
   polygons: Polygon[]
   vertices: Point[]
   segments: Segment[]
-  pyramids: Pyramid[]
   center: Point
 
+  /**
+   * The normal of each polygon is checked and corrected so that all surfaces face outward.
+   * Additionaly, Euler's formula is used to verify that the polyhedron is a closed shape.
+   */
   constructor(polygons: Polygon[]) {
     this.polygons = polygons.map((polygon) => polygon.clone())
     this._sortPolygons()
 
     const pointSet = new HashSet<Point>()
     const segmentSet = new HashSet<Segment>()
-    const pyramidSet = new HashSet<Pyramid>()
 
     for (const polygon of this.polygons) {
       for (const point of polygon.vertices) {
         pointSet.add(point.clone())
       }
-      for (const segment of polygon.segments()) {
-        // @todo add clone method to Segment
-        segmentSet.add(segment)
+      for (const segment of polygon.segments) {
+        segmentSet.add(segment.clone())
       }
     }
 
@@ -123,24 +39,21 @@ export default class Polyhedron {
       // Check if the normal if facing inwards, and if so, reverse it
       const polygon = this.polygons[i]
       const direction = dot(
-        new Vector(this.center, polygon.plane.position),
+        subtract(polygon.plane.position.toVector(), this.center.toVector()),
         polygon.plane.normal
       )
       if (math.smaller(direction, 0)) {
         polygon.negate()
       }
-      pyramidSet.add(new Pyramid(polygon, this.center))
     }
 
-    this.pyramids = Array.from(pyramidSet)
-
     if (!this._checkNormal()) {
-      throw new Error('Check Normal Fails For The Convex Polyhedron')
+      throw new Error('One or more sides of the polyhedron faces inward')
     }
 
     if (!this._checkEuler()) {
       throw new Error(
-        'Check for the number of vertices, faces and edges fails, the polyhedron may not be closed'
+        'Check for the number of vertices, faces, and edges failed. The polyhedron may not be closed'
       )
     }
   }
@@ -177,10 +90,10 @@ export default class Polyhedron {
   }
 
   private _checkNormal() {
-    /** return True if all the polygons' normals point to the outside */
+    // Returns true if all the polygons' normals point to the outside
     for (const polygon of this.polygons) {
       const direction = dot(
-        new Vector(this.center, polygon.plane.position),
+        subtract(polygon.plane.position.toVector(), this.center.toVector()),
         polygon.plane.normal
       )
       if (math.smaller(direction, 0)) {
@@ -205,7 +118,7 @@ export default class Polyhedron {
   contains(other: Point | Segment | Polygon): boolean {
     if (other instanceof Point) {
       for (const polygon of this.polygons) {
-        const direction = new Vector(polygon.center, other)
+        const direction = subtract(other.toVector(), polygon.center.toVector())
         if (math.larger(dot(direction, polygon.plane.normal), 0)) {
           return false
         }
@@ -231,13 +144,12 @@ export default class Polyhedron {
 
     const pointSet = new HashSet<Point>()
     const segmentSet = new HashSet<Segment>()
-    const pyramidSet = new HashSet<Pyramid>()
 
     for (const polygon of this.polygons) {
       for (const point of polygon.vertices) {
         pointSet.add(point)
       }
-      for (const segment of polygon.segments()) {
+      for (const segment of polygon.segments) {
         segmentSet.add(segment)
       }
     }
@@ -246,58 +158,7 @@ export default class Polyhedron {
     this.segments = Array.from(segmentSet)
     this.center = this._getCenterPoint()
 
-    for (let i = 0; i < this.polygons.length; i += 1) {
-      const polygon = this.polygons[i]
-      const direction = dot(
-        new Vector(this.center, polygon.plane.position),
-        polygon.plane.normal
-      )
-      if (math.smaller(direction, 0)) {
-        polygon.negate()
-      }
-      pyramidSet.add(new Pyramid(polygon, this.center))
-    }
-
-    this.pyramids = Array.from(pyramidSet)
-
-    if (!this._checkNormal()) {
-      throw new Error('Check Normal Fails For The Convex Polyhedron')
-    }
-
-    if (!this._checkEuler()) {
-      throw new Error(
-        'Check for the number of vertices, faces and edges fails, the polyhedron may not be closed'
-      )
-    }
-
     return this
-  }
-
-  length() {
-    /** return the total length of the polyhedron */
-    let length = 0
-    for (const segment of this.segments) {
-      length += segment.length()
-    }
-    return length
-  }
-
-  area() {
-    /** return the total area of the polyhedron */
-    let area = 0
-    for (const polygon of this.polygons) {
-      area += polygon.area()
-    }
-    return area
-  }
-
-  volume() {
-    /** return the total volume of the polyhedron */
-    let volume = 0
-    for (const pyramid of this.pyramids) {
-      volume += pyramid.volume()
-    }
-    return volume
   }
 }
 
@@ -310,20 +171,20 @@ export class Parallelepiped extends Polyhedron {
     }
 
     const diagonal = origin.clone().translate(v1).translate(v2).translate(v3)
-    const rectangle0 = Polygon.Parallelogram(origin, v1, v2)
-    const rectangle1 = Polygon.Parallelogram(origin, v2, v3)
-    const rectangle2 = Polygon.Parallelogram(origin, v1, v3)
-    const rectangle3 = Polygon.Parallelogram(
+    const rectangle0 = new Parallelogram(origin, v1, v2)
+    const rectangle1 = new Parallelogram(origin, v2, v3)
+    const rectangle2 = new Parallelogram(origin, v1, v3)
+    const rectangle3 = new Parallelogram(
       diagonal,
       v1.clone().negate(),
       v2.clone().negate()
     )
-    const rectangle4 = Polygon.Parallelogram(
+    const rectangle4 = new Parallelogram(
       diagonal,
       v2.clone().negate(),
       v3.clone().negate()
     )
-    const rectangle5 = Polygon.Parallelogram(
+    const rectangle5 = new Parallelogram(
       diagonal,
       v1.clone().negate(),
       v3.clone().negate()

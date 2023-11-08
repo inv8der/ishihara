@@ -1,7 +1,7 @@
 import Color from 'colorjs.io'
 import math from '../math'
 import type { Vector3D, ColorCoords } from '../types'
-import { Polyhedron, Line, Point, Vector, intersection } from '../geo3d'
+import { Parallelepiped, Line, Point, Vector, intersection } from '../geo3d'
 import { colorSpaceConverter, toHexString, LMSModel } from './convert'
 
 type ColorRange = (percentage: number) => string
@@ -33,7 +33,7 @@ function lmsConfusionSegment(
   const v3 = math.flatten(math.subtract(lms_B, lms_K)) as Vector3D
 
   // The parallelogram is defined by the origin (black) and the 3 vectors.
-  const rgbGamut = Polyhedron.Parallelepiped(
+  const rgbGamut = new Parallelepiped(
     new Point(...base),
     new Vector(v1),
     new Vector(v2),
@@ -68,7 +68,7 @@ function lmsConfusionSegment(
     throw new Error('The provided color is not in the RGB gamut.')
   }
 
-  return segment.start.pv().length() < segment.end.pv().length()
+  return segment.start.toVector().length() < segment.end.toVector().length()
     ? [segment.start, segment.end]
     : [segment.end, segment.start]
 }
@@ -88,8 +88,8 @@ function createConfusionLine(
 
   return (percentage: number) => {
     const lms = math.add(
-      math.multiply(segment[0].pv().toArray(), 1.0 - percentage),
-      math.multiply(segment[1].pv().toArray(), percentage)
+      math.multiply(segment[0].toVector().toArray(), 1.0 - percentage),
+      math.multiply(segment[1].toVector().toArray(), percentage)
     ) as ColorCoords
 
     return toHexString(convert(lms, 'lms', 'srgb'))

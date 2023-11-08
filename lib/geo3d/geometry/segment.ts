@@ -1,19 +1,19 @@
 import math from '../../math'
-import Vector, { dot, add } from '../utils/vector'
-import Point from './point'
-import Line from './line'
+import { Vector, dot, add, subtract } from '../utils/vector'
+import { Point } from './point'
+import { Line } from './line'
 
-export default class Segment {
+export class Segment {
   public start: Point
   public end: Point
   public line: Line
 
-  constructor(p1: Point, p2: Point)
-  constructor(point: Point, vector: Vector)
+  constructor(start: Point, end: Point)
+  constructor(point: Point, direction: Vector)
   constructor(a: Point, b: Point | Vector) {
     if (a instanceof Point && b instanceof Point) {
       if (a.equals(b)) {
-        throw new Error('Cannot initialize a Segment with two identical Points')
+        throw new Error('Cannot initialize Segment with two identical points')
       }
       this.line = new Line(a, b)
       this.start = a.clone()
@@ -21,14 +21,16 @@ export default class Segment {
     } else if (a instanceof Point && b instanceof Vector) {
       if (math.equal(b.length(), 0)) {
         throw new Error(
-          'Cannot initialize a Segment with the length of Vector is 0'
+          'Cannot initialize Segment with a direction vector of length 0'
         )
       }
       this.line = new Line(a, b)
       this.start = a.clone()
-      this.end = new Point(add(a.pv(), b))
+      this.end = new Point(add(a.toVector(), b))
     } else {
-      throw new Error('Cannot create segment with type')
+      throw new Error(
+        `Cannot initialize Segment with parameters of type ${a.constructor.name} and ${b.constructor.name}`
+      )
     }
   }
 
@@ -50,8 +52,8 @@ export default class Segment {
 
   contains(other: Point | Segment): boolean {
     if (other instanceof Point) {
-      const v = new Vector(this.start, this.end)
-      const v1 = new Vector(this.start, other)
+      const v = subtract(this.end.toVector(), this.start.toVector())
+      const v1 = subtract(other.toVector(), this.start.toVector())
       if (math.equal(v1.length(), 0)) {
         return true
       } else {
@@ -72,13 +74,13 @@ export default class Segment {
     return false
   }
 
+  clone(): Segment {
+    return new Segment(this.start, this.end)
+  }
+
   translate(offset: Vector): Segment {
     this.start.translate(offset)
     this.end.translate(offset)
     return this
-  }
-
-  length(): number {
-    return this.start.distance(this.end)
   }
 }

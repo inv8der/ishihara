@@ -1,7 +1,7 @@
 import math from '../../math'
-import Vector from '../utils/vector'
+import { Vector } from '../utils/vector'
 
-export default class Point {
+export class Point {
   static origin() {
     /** Returns the Point (0 | 0 | 0) */
     return new Point(0, 0, 0)
@@ -11,16 +11,6 @@ export default class Point {
   y: number
   z: number
 
-  /**
-   * - Point(a, b, c)
-   * - Point([a, b, c]):
-   * The point with coordinates (a | b | c)
-   *
-   * - Point(Vector):
-   * The point that you get when you move the origin by the given
-   * vector. If the vector has coordinates (a | b | c), the point
-   * will have the coordinates (a | b | c) (as easy as pi).
-   */
   constructor(x: number, y: number, z: number)
   constructor(coords: [number, number, number])
   constructor(vector: Vector)
@@ -29,7 +19,7 @@ export default class Point {
   ) {
     let coords
     if (args.length == 1) {
-      // Initialisation by Vector is also handled by this
+      // Initialisation by vector is also handled by this
       coords = args[0]
     } else if (args.length == 3) {
       coords = args
@@ -41,7 +31,6 @@ export default class Point {
   }
 
   equals(other: Point): boolean {
-    /** Checks if two Points are equal. Always use == and not 'is'! */
     const result = math.equal(
       [this.x, this.y, this.z],
       [other.x, other.y, other.z]
@@ -76,17 +65,7 @@ export default class Point {
     return this
   }
 
-  pv(): Vector {
-    /** Return the position vector of the point. */
+  toVector(): Vector {
     return new Vector(this.x, this.y, this.z)
-  }
-
-  distance(point: Point): number {
-    /** Return the distance between self and other */
-    return Math.sqrt(
-      (this.x - point.x) ** 2 +
-        (this.y - point.y) ** 2 +
-        (this.z - point.z) ** 2
-    )
   }
 }

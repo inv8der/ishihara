@@ -1,0 +1,6 @@
+export { Line } from './line'
+export { Plane } from './plane'
+export { Point } from './point'
+export { Polygon, Parallelogram } from './polygon'
+export { Polyhedron, Parallelepiped } from './polyhedron'
+export { Segment } from './segment'

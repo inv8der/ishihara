@@ -1,11 +1,6 @@
 import math from '../../math'
-import Point from '../geometry/point'
-import Segment from '../geometry/segment'
-import Line from '../geometry/line'
-import Plane from '../geometry/plane'
-import Polygon from '../geometry/polygon'
-import Polyhedron from '../geometry/polyhedron'
-import Vector, { multiply, add, dot, cross } from './vector'
+import { Point, Segment, Line, Plane, Polygon, Polyhedron } from '../geometry'
+import { Vector, multiply, add, subtract, dot, cross } from './vector'
 import HashSet from './hashset'
 
 /**
@@ -38,12 +33,12 @@ function findLongestSegment(points: Point[]): Segment | null {
 
   const p0 = points[0]
   const p1 = points[1]
-  const v0 = new Vector(p0, p1)
+  const v0 = subtract(p1.toVector(), p0.toVector())
   const relativeLengths = [0, 1]
 
   for (let i = 2; i < points.length; i += 1) {
     const pi = points[i]
-    const vi = new Vector(p0, pi)
+    const vi = subtract(pi.toVector(), p0.toVector())
     if (!vi.parallel(v0)) {
       throw new Error('The points are not on a line')
     }
@@ -113,9 +108,9 @@ export function intersectLineLine(a: Line, b: Line): Line | Point | null {
         [a.direction[2], -b.direction[2], 0],
       ]
       let B = [
-        b.position[0] - a.position[0],
-        b.position[1] - a.position[1],
-        b.position[2] - a.position[2],
+        b.position.x - a.position.x,
+        b.position.y - a.position.y,
+        b.position.z - a.position.z,
       ]
 
       // Use bignumber for higher precision
@@ -129,7 +124,9 @@ export function intersectLineLine(a: Line, b: Line): Line | Point | null {
 
       // Could've chosen b.sv + mu * b.dv instead, but it doesn't matter as they
       // will point (pun intended) to the same point.
-      return new Point(add(a.position, multiply(lambda, a.direction)))
+      return new Point(
+        add(a.position.toVector(), multiply(lambda, a.direction))
+      )
     } catch (e) {
       // No intersection
       return null
@@ -152,10 +149,11 @@ export function intersectLinePlane(a: Line, b: Plane): Line | Point | null {
   //       u is the direction vector of the line
   //       μ is the parameter
   // Rearrange and solve for the parameter
+  const bpv = b.position.toVector()
+  const apv = a.position.toVector()
   const mu =
-    (dot(b.normal, b.position.pv()) - dot(b.normal, a.position)) /
-    dot(b.normal, a.direction)
-  return new Point(add(a.position, multiply(mu, a.direction)))
+    (dot(b.normal, bpv) - dot(b.normal, apv)) / dot(b.normal, a.direction)
+  return new Point(add(apv, multiply(mu, a.direction)))
 }
 
 export function intersectLineSegment(
@@ -179,7 +177,7 @@ export function intersectLinePolygon(
   const interection = intersectLinePlane(a, b.plane)
   if (interection instanceof Line) {
     const pointSet = new HashSet<Point>()
-    for (const segment of b.segments()) {
+    for (const segment of b.segments) {
       const interection = intersectLineSegment(a, segment)
       if (interection === null) {
         continue
@@ -245,11 +243,8 @@ export function intersectPlanePlane(a: Plane, b: Plane): Plane | Line | null {
     // intersectLinePlane returns a Line, which causes this function to return null
     return null
   } else {
-    const direction = cross(a.normal, b.normal).normalized()
-    const auxillaryLine = new Line(
-      a.position,
-      cross(direction, a.normal).normalized()
-    )
+    const direction = cross(a.normal, b.normal)
+    const auxillaryLine = new Line(a.position, cross(direction, a.normal))
     const intersection = intersectLinePlane(auxillaryLine, b)
     if (intersection instanceof Point) {
       return new Line(intersection, direction)
@@ -451,8 +446,8 @@ export function intersectPolygonPolygon(
         pointSet.add(point)
       }
     }
-    for (const sa of a.segments()) {
-      for (const sb of b.segments()) {
+    for (const sa of a.segments) {
+      for (const sb of b.segments) {
         const intersection = intersectSegmentSegment(sa, sb)
         if (intersection instanceof Point) {
           pointSet.add(intersection)

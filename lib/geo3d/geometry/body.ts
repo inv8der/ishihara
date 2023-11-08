@@ -1,4 +1,4 @@
-import type Vector from '../utils/vector'
+// import type Vector from '../utils/vector'
 
 // export default class GeoBody {
 //     /**

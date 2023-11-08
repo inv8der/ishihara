@@ -1,87 +1,48 @@
 import math from '../../math'
-import Vector, { dot, cross, subtract } from '../utils/vector'
-import Point from './point'
-import Plane from './plane'
-import Segment from './segment'
 import HashSet from '../utils/hashset'
+import { Vector, dot, cross, subtract } from '../utils/vector'
+import { Point } from './point'
+import { Plane } from './plane'
+import { Segment } from './segment'
 
-/**
- * Returns the area of the triangle composed by points a, b, and c using Heron's formula
- * @param pa
- * @param pb
- * @param pc
- * @returns
- */
-function getTriangleArea(pa: Point, pb: Point, pc: Point): number {
-  const a = pa.distance(pb)
-  const b = pb.distance(pc)
-  const c = pc.distance(pa)
-  const p = (a + b + c) / 2
-  return Math.sqrt(p * (p - a) * (p - b) * (p - c))
-}
-
-export default class Polygon {
-  static Parallelogram(origin: Point, v1: Vector, v2: Vector) {
-    /**
-     * A special function for creating Parallelogram
-     */
-    if (v1.length() == 0 || v2.length() == 0) {
-      throw new Error("The length for the two vector shouldn't be zero")
-    } else if (v1.parallel(v2)) {
-      throw new Error("The two vectors shouldn't be parallel to each other")
-    } else {
-      return new Polygon([
-        origin,
-        origin.clone().translate(v1),
-        origin.clone().translate(v2),
-        origin.clone().translate(v1).translate(v2),
-      ])
-    }
-  }
-
+export class Polygon {
   vertices: Point[]
-  // segments: Segment[]
+  segments: Segment[]
   plane: Plane
   center: Point
 
   /**
-   * ConvexPolygons(points)
-   * - points: a tuple of points.
-   *
-   * The points needn't to be in order.
-   * The convexity should be guaranteed. This function **will not** check the convexity.
+   * The points needn't be in order, but the convexity should be guaranteed.
    * If the Polygon is not convex, there might be errors.
    */
-  constructor(vertices: Point[], reverse = false) {
+  constructor(vertices: Point[]) {
+    if (vertices.length < 3) {
+      throw new Error('Cannot construct a polygon with fewer than 3 points')
+    }
+
     const points = new HashSet<Point>()
     for (const point of vertices) {
       points.add(point.clone())
     }
+
     this.vertices = Array.from(points)
+    this.plane = new Plane(this.vertices[0], this.vertices[1], this.vertices[2])
     this.center = this._getCenterPoint()
 
-    if (this.vertices.length < 3) {
-      throw new Error(
-        'Cannot build a polygon with number of points smaller than 3'
-      )
-    }
-
-    this.plane = new Plane(this.vertices[0], this.vertices[1], this.vertices[2])
-    if (reverse) {
-      this.plane.negate()
-    }
-
     this._checkAndSortVertices()
+
+    // Only build segments after sorting the vertices
+    this.segments = this._getSegments()
   }
 
   private _checkAndSortVertices() {
-    // This is only a weak check - passing doesn't guarantee it is a convex polygon
     const pointsByAngle = new Map<number, Point>()
-    const normal = this.plane.normal.normalized()
-    const v0 = new Vector(this.center, this.vertices[0]).normalized()
-    const v1 = cross(normal, v0)
+
+    const v0 = subtract(this.vertices[0].toVector(), this.center.toVector())
+    const v1 = cross(this.plane.normal, v0)
 
     for (const point of this.vertices) {
+      // This is only a weak check - passing doesn't guarantee it's a convex polygon
       if (!this.plane.contains(point)) {
         throw new Error(
           `Convex check failed because point (${[
@@ -92,7 +53,7 @@ export default class Polygon {
         )
       }
 
-      const pv = subtract(point.pv(), this.center.pv())
+      const pv = subtract(point.toVector(), this.center.toVector())
       const y = dot(pv, v0)
       const z = dot(pv, v1)
       let angle = Math.atan2(z, y)
@@ -116,6 +77,15 @@ export default class Polygon {
       z += point.z
     }
     return new Point(x / numPoints, y / numPoints, z / numPoints)
+  }
+
+  private _getSegments(): Segment[] {
+    const segments = []
+    for (let i = 0; i < this.vertices.length; i += 1) {
+      const j = i === this.vertices.length - 1 ? 0 : i + 1
+      segments.push(new Segment(this.vertices[i], this.vertices[j]))
+    }
+    return segments
   }
 
   equals(other: Polygon) {
@@ -145,14 +115,16 @@ export default class Polygon {
       const r1 = this.plane.contains(other)
 
       // Requirement 2: the point is inside the polygon
-      const normal = this.plane.normal.normalized()
       let r2 = true
       for (let i = 0; i < this.vertices.length; i += 1) {
         // Check if the point lies in the inside direction of every segment
         const j = i === this.vertices.length - 1 ? 0 : i + 1
-        const v0 = new Vector(this.vertices[i], this.vertices[j])
-        const v1 = cross(normal, v0)
-        const vec = new Vector(this.vertices[i], other)
+        const v0 = subtract(
+          this.vertices[j].toVector(),
+          this.vertices[i].toVector()
+        )
+        const v1 = cross(this.plane.normal, v0)
+        const vec = subtract(other.toVector(), this.vertices[i].toVector())
 
         if (math.smaller(dot(vec, v1), 0)) {
           r2 = false
@@ -173,51 +145,20 @@ export default class Polygon {
     })
     this.plane = new Plane(this.vertices[0], this.vertices[1], this.vertices[2])
     this.center = this._getCenterPoint()
+    this.segments = this._getSegments()
     return this
-  }
-
-  *segments(): IterableIterator<Segment> {
-    for (let i = 0; i < this.vertices.length; i += 1) {
-      const j = i === this.vertices.length - 1 ? 0 : i + 1
-      yield new Segment(this.vertices[i], this.vertices[j])
-    }
   }
 
   negate(): Polygon {
-    // Return the negative ConvexPolygon by reverting the normal
-    const negative = new Polygon(this.vertices, true)
-    this.vertices = negative.vertices
-    this.plane = negative.plane
-    this.center = negative.center
+    // Negate the polygon by reverting the normal
+    this.plane.negate()
+
+    // Reverting the normal will reverse the sort order of the vertices. Since we know this
+    // is a valid polygon, calling this_checkAndSortVertices() is unnecessary
+    this.vertices.reverse()
+    this.segments = this._getSegments()
+
     return this
-  }
-
-  length() {
-    /** return the total length of ConvexPolygon */
-    let length = 0
-    for (const segment of this.segments()) {
-      length += segment.length()
-    }
-    return length
-  }
-
-  area() {
-    let area = 0
-    for (let i = 0; i < this.vertices.length; i += 1) {
-      const index_0 = i
-      let index_1
-      if (i == this.vertices.length - 1) {
-        index_1 = 0
-      } else {
-        index_1 = i + 1
-      }
-      area += getTriangleArea(
-        this.center,
-        this.vertices[index_0],
-        this.vertices[index_1]
-      )
-    }
-    return area
   }
 }
 
