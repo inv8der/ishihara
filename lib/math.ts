@@ -5,13 +5,17 @@ import {
   type MathNumericType,
   type MathType,
   type Matrix,
-  type MathJsStatic,
+  type MathJsInstance,
 } from 'mathjs'
+
+const config = {
+  epsilon: 1e-10,
+}
 
 const createClip = factory(
   'clip',
   ['smaller', 'larger', 'map', 'isMatrix', 'isArray'],
-  (math) => {
+  ({ smaller, larger, map, isMatrix, isArray }) => {
     function clip(x: number, min: MathNumericType, max: MathNumericType): number
     function clip(
       x: number[],
@@ -29,23 +33,41 @@ const createClip = factory(
       min: MathNumericType,
       max: MathNumericType
     ): MathType {
-      if (math.isArray(x) || math.isMatrix(x)) {
-        return math.map(x, (v) =>
-          math.smaller(v, min) ? min : math.larger(v, max) ? max : v
-        )
+      if (isArray(x) || isMatrix(x)) {
+        return map(x, (v) => (smaller(v, min) ? min : larger(v, max) ? max : v))
       }
-      return math.smaller(x, min) ? min : math.larger(x, max) ? max : x
+      return smaller(x, min) ? min : larger(x, max) ? max : x
     }
 
     return clip
   }
 )
 
-interface CustomMathJsStatic extends MathJsStatic {
+// const _math = create(all, config)
+// const createEqualScalar = factory('equalScalar', [], () => {
+//   function equalScalar(x: MathScalarType, y: MathScalarType): boolean {
+//     x = _math.add(x, 1)
+//     y = _math.add(y, 1)
+
+//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//     // @ts-ignore
+//     return _math.equalScalar(x, y)
+//   }
+
+//   return equalScalar
+// })
+
+interface CustomMathJsInstance extends MathJsInstance {
   clip: ReturnType<typeof createClip>
 }
 
-const math = create(all, { epsilon: 1 / 10 ** 10 })
-math.import(createClip)
+// const {
+//   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//   createEqualScalar: _createEqualScalar,
+//   ...allExceptEqualScalar
+// } = all
 
-export default math as CustomMathJsStatic
+const math = create(all, config)
+math.import([createClip])
+
+export default math as CustomMathJsInstance
