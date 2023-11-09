@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import math from '../../math'
 import { Vector } from '../utils/vector'
 import type { Geometry } from './geometry'
@@ -60,6 +61,7 @@ export class Point implements Geometry<Point> {
     )
   }
 
+  // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   contains<T extends Geometry<T>>(other: T): boolean {
     // A point is the lowest dimensional object so it cannot contain any other geometry
