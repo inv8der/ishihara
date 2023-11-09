@@ -4,8 +4,9 @@ import { Vector, dot, cross, subtract } from '../utils/vector'
 import { Point } from './point'
 import { Plane } from './plane'
 import { Segment } from './segment'
+import type { Geometry } from './geometry'
 
-export class Polygon {
+export class Polygon implements Geometry<Polygon> {
   vertices: Point[]
   segments: Segment[]
   plane: Plane
@@ -38,11 +39,11 @@ export class Polygon {
   private _checkAndSortVertices() {
     const pointsByAngle = new Map<number, Point>()
 
-    const v0 = subtract(this.vertices[0].toVector(), this.center.toVector())
+    const v0 = subtract(this.vertices[0].vector, this.center.vector)
     const v1 = cross(this.plane.normal, v0)
 
     for (const point of this.vertices) {
-      // This is only a weak check - passing doesn't guarantee it's a convex polygon
+      // This is only a weak check - passing doesn't guarantee a convex polygon
       if (!this.plane.contains(point)) {
         throw new Error(
           `Convex check failed because point (${[
@@ -53,7 +54,7 @@ export class Polygon {
         )
       }
 
-      const pv = subtract(point.toVector(), this.center.toVector())
+      const pv = subtract(point.vector, this.center.vector)
       const y = dot(pv, v0)
       const z = dot(pv, v1)
       let angle = Math.atan2(z, y)
@@ -105,27 +106,21 @@ export class Polygon {
     )
   }
 
-  clone(): Polygon {
-    return new Polygon(this.vertices)
-  }
-
-  contains(other: Point | Segment): boolean {
+  contains<T extends Geometry<T>>(other: T): boolean {
     if (other instanceof Point) {
-      // Requirement 1: the point is on the plane
-      const r1 = this.plane.contains(other)
+      const point: Point = other
 
-      // Requirement 2: the point is inside the polygon
+      // Requirement 1: point is on the plane
+      const r1 = this.plane.contains(point)
+
+      // Requirement 2: point is inside the polygon
       let r2 = true
       for (let i = 0; i < this.vertices.length; i += 1) {
         // Check if the point lies in the inside direction of every segment
         const j = i === this.vertices.length - 1 ? 0 : i + 1
-        const v0 = subtract(
-          this.vertices[j].toVector(),
-          this.vertices[i].toVector()
-        )
+        const v0 = subtract(this.vertices[j].vector, this.vertices[i].vector)
         const v1 = cross(this.plane.normal, v0)
-        const vec = subtract(other.toVector(), this.vertices[i].toVector())
-
+        const vec = subtract(point.vector, this.vertices[i].vector)
         if (math.smaller(dot(vec, v1), 0)) {
           r2 = false
           break
@@ -133,7 +128,8 @@ export class Polygon {
       }
       return r1 && r2
     } else if (other instanceof Segment) {
-      return this.contains(other.start) && this.contains(other.end)
+      const segment = other as Segment
+      return this.contains(segment.start) && this.contains(segment.end)
     }
 
     return false
@@ -147,6 +143,10 @@ export class Polygon {
     this.center = this._getCenterPoint()
     this.segments = this._getSegments()
     return this
+  }
+
+  clone(): Polygon {
+    return new Polygon(this.vertices)
   }
 
   negate(): Polygon {

@@ -1,4 +1,4 @@
-// import type Vector from '../utils/vector'
+import type { Vector } from '../utils/vector'
 
 // export default class GeoBody {
 //     /**
@@ -35,25 +35,58 @@
 
 // }
 
-export default interface GeoBody {
-  intersection(other: unknown): unknown
-  distance(other: unknown): unknown
-  parallel(other: unknown): unknown
-  orthogonal(other: unknown): unknown
+// export default interface GeoBody {
+//   intersection(other: unknown): unknown
+//   distance(other: unknown): unknown
+//   parallel(other: unknown): unknown
+//   orthogonal(other: unknown): unknown
+// }
+
+export interface Geometry<T> {
+  equals(other: T): boolean
+  getHashCode(): string
+  contains<T extends Geometry<T>>(other: T): boolean
+  translate(offset: Vector): T
+  clone(): T
 }
 
-// export interface Geometry {
-//   isPlane: boolean
-//   isPoint: boolean
-//   isLine: boolean
-//   isSegment: boolean
-//   isPolygon: boolean
-//   isPolyhedron: boolean
-
-//   contains(other: Geometry): boolean
-//   equals(other: Geometry): boolean
-//   getHashCode(): string
-
-//   translate(offset: Vector): Geometry
-//   clone(): Geometry
+// class Point implements Geometry<Point> {
+//   equals(other: Point): boolean {
+//     return false
+//   }
+//   clone(): Point {
+//     return this
+//   }
+//   translate(): Point {
+//     return this
+//   }
+//   contains() {
+//     return false
+//   }
+//   getHashCode() {
+//     return 'point'
+//   }
 // }
+
+// class Line implements Geometry<Line> {
+//   equals<Line>(other: Line): boolean {
+//     return false
+//   }
+//   clone(): Line {
+//     return this
+//   }
+//   translate() {
+//     return this
+//   }
+//   contains<T extends Geometry<T>>(other: T) {
+//     return false
+//   }
+//   getHashCode() {
+//     return 'line'
+//   }
+// }
+
+// const p = new Point()
+// const l = new Line()
+
+// l.contains(p)

@@ -1,15 +1,19 @@
 import math from '../../math'
 import { Vector } from '../utils/vector'
+import type { Geometry } from './geometry'
 
-export class Point {
+export class Point implements Geometry<Point> {
   static origin() {
-    /** Returns the Point (0 | 0 | 0) */
     return new Point(0, 0, 0)
   }
 
   x: number
   y: number
   z: number
+
+  get vector(): Vector {
+    return new Vector(this.x, this.y, this.z)
+  }
 
   constructor(x: number, y: number, z: number)
   constructor(coords: [number, number, number])
@@ -53,11 +57,15 @@ export class Point {
     )
   }
 
-  clone(): Point {
-    return new Point(this.x, this.y, this.z)
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  contains<T extends Geometry<T>>(other: T): boolean {
+    // A point is the lowest dimensional object so it cannot contain any other geometry
+    return false
   }
 
-  translate(offset: Vector) {
+  translate(offset: Vector): Point {
     this.x += offset[0]
     this.y += offset[1]
     this.z += offset[2]
@@ -65,7 +73,7 @@ export class Point {
     return this
   }
 
-  toVector(): Vector {
-    return new Vector(this.x, this.y, this.z)
+  clone(): Point {
+    return new Point(this.x, this.y, this.z)
   }
 }

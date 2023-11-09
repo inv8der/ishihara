@@ -2,8 +2,9 @@ import math from '../../math'
 import { Vector, dot, add, subtract } from '../utils/vector'
 import { Point } from './point'
 import { Line } from './line'
+import type { Geometry } from './geometry'
 
-export class Segment {
+export class Segment implements Geometry<Segment> {
   public start: Point
   public end: Point
   public line: Line
@@ -26,7 +27,7 @@ export class Segment {
       }
       this.line = new Line(a, b)
       this.start = a.clone()
-      this.end = new Point(add(a.toVector(), b))
+      this.end = new Point(add(a.vector, b))
     } else {
       throw new Error(
         `Cannot initialize Segment with parameters of type ${a.constructor.name} and ${b.constructor.name}`
@@ -50,37 +51,36 @@ export class Segment {
     )
   }
 
-  contains(other: Point | Segment): boolean {
+  contains<T extends Geometry<T>>(other: T): boolean {
     if (other instanceof Point) {
-      const v = subtract(this.end.toVector(), this.start.toVector())
-      const v1 = subtract(other.toVector(), this.start.toVector())
+      const point = other as Point
+      const v = subtract(this.end.vector, this.start.vector)
+      const v1 = subtract(point.vector, this.start.vector)
       if (math.equal(v1.length(), 0)) {
         return true
       } else {
         const relativeLength = dot(v1, v) / v.length() / v.length()
         return (
-          this.line.contains(other) &&
+          this.line.contains(point) &&
           (math.larger(relativeLength, 0) as boolean) &&
           (math.smaller(relativeLength, 1) as boolean)
         )
       }
-      // r1 = this.line.contains(other)
-      // r2 = math.larger(other.x, math.min(this.start.x, this.end.x))
-      // r3 = math.smaller(other.x, math.max(this.start.x, this.end.x))
     } else if (other instanceof Segment) {
-      return this.contains(other.start) && this.contains(other.end)
+      const segment = other as Segment
+      return this.contains(segment.start) && this.contains(segment.end)
     }
 
     return false
-  }
-
-  clone(): Segment {
-    return new Segment(this.start, this.end)
   }
 
   translate(offset: Vector): Segment {
     this.start.translate(offset)
     this.end.translate(offset)
     return this
+  }
+
+  clone(): Segment {
+    return new Segment(this.start, this.end)
   }
 }

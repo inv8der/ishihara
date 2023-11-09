@@ -33,12 +33,12 @@ function findLongestSegment(points: Point[]): Segment | null {
 
   const p0 = points[0]
   const p1 = points[1]
-  const v0 = subtract(p1.toVector(), p0.toVector())
+  const v0 = subtract(p1.vector, p0.vector)
   const relativeLengths = [0, 1]
 
   for (let i = 2; i < points.length; i += 1) {
     const pi = points[i]
-    const vi = subtract(pi.toVector(), p0.toVector())
+    const vi = subtract(pi.vector, p0.vector)
     if (!vi.parallel(v0)) {
       throw new Error('The points are not on a line')
     }
@@ -124,9 +124,7 @@ export function intersectLineLine(a: Line, b: Line): Line | Point | null {
 
       // Could've chosen b.sv + mu * b.dv instead, but it doesn't matter as they
       // will point (pun intended) to the same point.
-      return new Point(
-        add(a.position.toVector(), multiply(lambda, a.direction))
-      )
+      return new Point(add(a.position.vector, multiply(lambda, a.direction)))
     } catch (e) {
       // No intersection
       return null
@@ -149,8 +147,8 @@ export function intersectLinePlane(a: Line, b: Plane): Line | Point | null {
   //       u is the direction vector of the line
   //       μ is the parameter
   // Rearrange and solve for the parameter
-  const bpv = b.position.toVector()
-  const apv = a.position.toVector()
+  const bpv = b.position.vector
+  const apv = a.position.vector
   const mu =
     (dot(b.normal, bpv) - dot(b.normal, apv)) / dot(b.normal, a.direction)
   return new Point(add(apv, multiply(mu, a.direction)))

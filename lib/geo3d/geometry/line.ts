@@ -2,20 +2,18 @@ import math from '../../math'
 import { Vector, subtract } from '../utils/vector'
 import { Point } from './point'
 import { Segment } from './segment'
+import type { Geometry } from './geometry'
 
-export class Line {
+export class Line implements Geometry<Line> {
   static xAxis() {
-    /** return x axis which is a Line */
     return new Line(Point.origin(), new Point(1, 0, 0))
   }
 
   static yAxis() {
-    /** return y axis which is a Line */
     return new Line(Point.origin(), new Point(0, 1, 0))
   }
 
   static zAxis() {
-    /** return z axis which is a Line */
     return new Line(Point.origin(), new Point(0, 0, 1))
   }
 
@@ -28,7 +26,7 @@ export class Line {
     this.position = a.clone()
     this.direction =
       b instanceof Point
-        ? subtract(b.toVector(), a.toVector()).normalize()
+        ? subtract(b.vector, a.vector).normalize()
         : b.clone().normalize()
 
     if (this.direction.equals(Vector.zero())) {
@@ -59,19 +57,25 @@ export class Line {
     )
   }
 
-  contains(other: Point | Segment): boolean {
-    /** Checks if a object lies on a line */
+  contains<T extends Geometry<T>>(other: T): boolean {
     if (other instanceof Point) {
-      const v = subtract(other.toVector(), this.position.toVector())
+      const point = other as Point
+      const v = subtract(point.vector, this.position.vector)
       return v.parallel(this.direction)
     } else if (other instanceof Segment) {
-      return this.contains(other.start) && this.contains(other.end)
+      const segment = other as Segment
+      return this.contains(segment.start) && this.contains(segment.end)
     }
+
     return false
   }
 
   translate(offset: Vector): Line {
     this.position.translate(offset)
     return this
+  }
+
+  clone(): Line {
+    return new Line(this.position, this.direction)
   }
 }

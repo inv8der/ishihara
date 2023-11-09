@@ -68,9 +68,12 @@ function lmsConfusionSegment(
     throw new Error('The provided color is not in the RGB gamut.')
   }
 
-  return segment.start.toVector().length() < segment.end.toVector().length()
-    ? [segment.start, segment.end]
-    : [segment.end, segment.start]
+  const start = segment.start.vector
+  const end = segment.end.vector
+
+  return start.length() < end.length()
+    ? [start.toArray(), end.toArray()]
+    : [end.toArray(), start.toArray()]
 }
 
 function createConfusionLine(
@@ -88,8 +91,8 @@ function createConfusionLine(
 
   return (percentage: number) => {
     const lms = math.add(
-      math.multiply(segment[0].toVector().toArray(), 1.0 - percentage),
-      math.multiply(segment[1].toVector().toArray(), percentage)
+      math.multiply(segment[0], 1.0 - percentage),
+      math.multiply(segment[1], percentage)
     ) as ColorCoords
 
     return toHexString(convert(lms, 'lms', 'srgb'))

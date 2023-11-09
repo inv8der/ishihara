@@ -4,8 +4,9 @@ import { Vector, dot, subtract } from '../utils/vector'
 import { Point } from './point'
 import { Polygon, Parallelogram } from './polygon'
 import { Segment } from './segment'
+import type { Geometry } from './geometry'
 
-export class Polyhedron {
+export class Polyhedron implements Geometry<Polyhedron> {
   polygons: Polygon[]
   vertices: Point[]
   segments: Segment[]
@@ -39,7 +40,7 @@ export class Polyhedron {
       // Check if the normal if facing inwards, and if so, reverse it
       const polygon = this.polygons[i]
       const direction = dot(
-        subtract(polygon.plane.position.toVector(), this.center.toVector()),
+        subtract(polygon.plane.position.vector, this.center.vector),
         polygon.plane.normal
       )
       if (math.smaller(direction, 0)) {
@@ -93,7 +94,7 @@ export class Polyhedron {
     // Returns true if all the polygons' normals point to the outside
     for (const polygon of this.polygons) {
       const direction = dot(
-        subtract(polygon.plane.position.toVector(), this.center.toVector()),
+        subtract(polygon.plane.position.vector, this.center.vector),
         polygon.plane.normal
       )
       if (math.smaller(direction, 0)) {
@@ -115,25 +116,29 @@ export class Polyhedron {
     )
   }
 
-  contains(other: Point | Segment | Polygon): boolean {
+  contains<T extends Geometry<T>>(other: T): boolean {
     if (other instanceof Point) {
+      const point = other as Point
       for (const polygon of this.polygons) {
-        const direction = subtract(other.toVector(), polygon.center.toVector())
+        const direction = subtract(point.vector, polygon.center.vector)
         if (math.larger(dot(direction, polygon.plane.normal), 0)) {
           return false
         }
       }
       return true
     } else if (other instanceof Segment) {
-      return this.contains(other.start) && this.contains(other.end)
+      const segment = other as Segment
+      return this.contains(segment.start) && this.contains(segment.end)
     } else if (other instanceof Polygon) {
-      for (const point of other.vertices) {
+      const polygon = other as Polygon
+      for (const point of polygon.vertices) {
         if (!this.contains(point)) {
           return false
         }
       }
       return true
     }
+
     return false
   }
 
@@ -159,6 +164,10 @@ export class Polyhedron {
     this.center = this._getCenterPoint()
 
     return this
+  }
+
+  clone(): Polyhedron {
+    return new Polyhedron(this.polygons)
   }
 }
 
