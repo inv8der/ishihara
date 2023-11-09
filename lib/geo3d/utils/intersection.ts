@@ -102,20 +102,27 @@ export function intersectLineLine(a: Line, b: Line): Line | Point | null {
       //   s2 + λ u2 = t2 + μ v2
       //   s3 + λ u3 = t3 + μ v3
       // Rearrange a bit, and you get this system of equations in the form Ax = B.
-      let A = [
-        [a.direction[0], -b.direction[0], 0],
-        [a.direction[1], -b.direction[1], 0],
-        [a.direction[2], -b.direction[2], 0],
+      // Note: We use bignumber for higher precision. Otherwise, lusolve might not
+      // find a solution.
+      const A = [
+        [a.direction[0], -b.direction[0], 0].map((x) => math.bignumber(x)),
+        [a.direction[1], -b.direction[1], 0].map((x) => math.bignumber(x)),
+        [a.direction[2], -b.direction[2], 0].map((x) => math.bignumber(x)),
       ]
-      let B = [
-        b.position.x - a.position.x,
-        b.position.y - a.position.y,
-        b.position.z - a.position.z,
+      const B = [
+        math.subtract(
+          math.bignumber(b.position.x),
+          math.bignumber(a.position.x)
+        ),
+        math.subtract(
+          math.bignumber(b.position.y),
+          math.bignumber(a.position.y)
+        ),
+        math.subtract(
+          math.bignumber(b.position.z),
+          math.bignumber(a.position.z)
+        ),
       ]
-
-      // Use bignumber for higher precision
-      A = math.map(A, (x) => math.bignumber(x))
-      B = math.map(B, (x) => math.bignumber(x))
 
       // We can use math.lusolve to solve for x (the column vector containing λ and μ)
       // Just need to pick one and plug it into the right equation.
