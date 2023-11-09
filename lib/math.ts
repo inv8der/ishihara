@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
   factory,
   create,
@@ -43,31 +44,62 @@ const createClip = factory(
   }
 )
 
-// const _math = create(all, config)
-// const createEqualScalar = factory('equalScalar', [], () => {
-//   function equalScalar(x: MathScalarType, y: MathScalarType): boolean {
-//     x = _math.add(x, 1)
-//     y = _math.add(y, 1)
+const createAbsEqual = factory(
+  'absEqual',
+  // @ts-ignore - MathJsInstance is missing type info for numeric()
+  ['equal', 'add', 'numeric'],
+  // @ts-ignore - MathJsInstance is missing type info for numeric()
+  ({ equal, add, numeric }) => {
+    const absEqual: typeof equal = (...args) => {
+      const x = typeof args[0] === 'string' ? numeric(args[0]) : args[0]
+      const y = typeof args[1] === 'string' ? numeric(args[1]) : args[1]
+      return equal(x, y) || equal(add(x, 1), add(y, 1))
+    }
 
-//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//     // @ts-ignore
-//     return _math.equalScalar(x, y)
-//   }
+    return absEqual
+  }
+)
 
-//   return equalScalar
-// })
+const createAbsSmaller = factory(
+  'absSmaller',
+  // @ts-ignore - MathJsInstance is missing type info for numeric()
+  ['smaller', 'add', 'numeric'],
+  // @ts-ignore - MathJsInstance is missing type info for numeric()
+  ({ smaller, add, numeric }) => {
+    const absSmaller: typeof smaller = (...args) => {
+      const x = typeof args[0] === 'string' ? numeric(args[0]) : args[0]
+      const y = typeof args[1] === 'string' ? numeric(args[1]) : args[1]
+      return smaller(x, y) || smaller(add(x, 1), add(y, 1))
+    }
+
+    return absSmaller
+  }
+)
+
+const createAbsLarger = factory(
+  'absLarger',
+  // @ts-ignore - MathJsInstance is missing type info for numeric()
+  ['larger', 'add', 'numeric'],
+  // @ts-ignore - MathJsInstance is missing type info for numeric()
+  ({ larger, add, numeric }) => {
+    const absLarger: typeof larger = (...args) => {
+      const x = typeof args[0] === 'string' ? numeric(args[0]) : args[0]
+      const y = typeof args[1] === 'string' ? numeric(args[1]) : args[1]
+      return larger(x, y) || larger(add(x, 1), add(y, 1))
+    }
+
+    return absLarger
+  }
+)
 
 interface CustomMathJsInstance extends MathJsInstance {
   clip: ReturnType<typeof createClip>
+  absEqual: MathJsInstance['equal']
+  absSmaller: MathJsInstance['smaller']
+  absLarger: MathJsInstance['larger']
 }
 
-// const {
-//   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//   createEqualScalar: _createEqualScalar,
-//   ...allExceptEqualScalar
-// } = all
-
 const math = create(all, config)
-math.import([createClip])
+math.import([createClip, createAbsEqual, createAbsSmaller, createAbsLarger])
 
 export default math as CustomMathJsInstance

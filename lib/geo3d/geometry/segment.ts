@@ -20,7 +20,7 @@ export class Segment implements Geometry<Segment> {
       this.start = a.clone()
       this.end = b.clone()
     } else if (a instanceof Point && b instanceof Vector) {
-      if (math.equal(b.length(), 0)) {
+      if (math.absEqual(b.length(), 0)) {
         throw new Error(
           'Cannot initialize Segment with a direction vector of length 0'
         )
@@ -56,14 +56,14 @@ export class Segment implements Geometry<Segment> {
       const point = other as Point
       const v = subtract(this.end.vector, this.start.vector)
       const v1 = subtract(point.vector, this.start.vector)
-      if (math.equal(v1.length(), 0)) {
+      if (math.absEqual(v1.length(), 0)) {
         return true
       } else {
         const relativeLength = dot(v1, v) / v.length() / v.length()
         return (
           this.line.contains(point) &&
-          (math.larger(relativeLength, 0) as boolean) &&
-          (math.smaller(relativeLength, 1) as boolean)
+          (math.absLarger(relativeLength, 0) as boolean) &&
+          (math.absSmaller(relativeLength, 1) as boolean)
         )
       }
     } else if (other instanceof Segment) {

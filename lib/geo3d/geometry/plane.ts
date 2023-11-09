@@ -60,7 +60,7 @@ export class Plane implements Geometry<Plane> {
   contains<T extends Geometry<T>>(other: T): boolean {
     if (other instanceof Point) {
       const point = other as Point
-      return math.equal(
+      return math.absEqual(
         dot(point.vector, this.normal) - dot(this.position.vector, this.normal),
         0
       ) as boolean

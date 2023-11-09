@@ -57,9 +57,9 @@ export class Polygon implements Geometry<Polygon> {
       const pv = subtract(point.vector, this.center.vector)
       const y = dot(pv, v0)
       const z = dot(pv, v1)
-      let angle = Math.atan2(z, y)
+      let angle = math.atan2(z, y)
       if (angle < 0) {
-        angle += 2 * Math.PI
+        angle += 2 * math.pi
       }
       pointsByAngle.set(angle, point)
     }
@@ -121,7 +121,7 @@ export class Polygon implements Geometry<Polygon> {
         const v0 = subtract(this.vertices[j].vector, this.vertices[i].vector)
         const v1 = cross(this.plane.normal, v0)
         const vec = subtract(point.vector, this.vertices[i].vector)
-        if (math.smaller(dot(vec, v1), 0)) {
+        if (math.absSmaller(dot(vec, v1), 0)) {
           r2 = false
           break
         }

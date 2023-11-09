@@ -55,7 +55,6 @@ export class Vector {
     return new Vector(0, 0, 1)
   }
 
-  public v: [number, number, number]
   public 0: number
   public 1: number
   public 2: number
@@ -65,33 +64,32 @@ export class Vector {
   constructor(...args: [number, number, number] | [[number, number, number]]) {
     if (args.length == 3) {
       // Initialising with 3 coordinates
-      this.v = args
-      this[0] = this.v[0]
-      this[1] = this.v[1]
-      this[2] = this.v[2]
+      const coords = args
+      this[0] = coords[0]
+      this[1] = coords[1]
+      this[2] = coords[2]
     } else if (args.length == 1) {
       // Initialising with an array of coordinates
-      this.v = args[0]
-      this[0] = this.v[0]
-      this[1] = this.v[1]
-      this[2] = this.v[2]
+      const coords = args[0]
+      this[0] = coords[0]
+      this[1] = coords[1]
+      this[2] = coords[2]
     } else {
       throw new Error('Vector() takes one or three parameters')
     }
   }
 
   *[Symbol.iterator]() {
-    yield this.v[0]
-    yield this.v[1]
-    yield this.v[2]
+    yield this[0]
+    yield this[1]
+    yield this[2]
   }
 
   equals(vector: Vector): boolean {
-    const result = math.equal(this.v, vector.v) as unknown as [
-      boolean,
-      boolean,
-      boolean,
-    ]
+    const result = math.absEqual(
+      this.toArray(),
+      vector.toArray()
+    ) as unknown as [boolean, boolean, boolean]
     return result.every((bool) => bool)
   }
 
@@ -109,40 +107,45 @@ export class Vector {
     )
   }
 
+  /**
+   * Returns |v|, the length of the vector.
+   */
   length(): number {
-    /** Returns |v|, the length of the vector. */
     const product = dot(this, this)
     return product ** 0.5
   }
 
+  /**
+   * Returns true if both vectors are parallel.
+   */
   parallel(vector: Vector): boolean {
-    /** Returns true if both vectors are parallel. */
     if (this.equals(Vector.zero()) || vector.equals(Vector.zero())) {
       return true
     }
     if (this.equals(vector)) {
       return true
     }
-    return math.equal(
-      (Math.abs(dot(this, vector)) - this.length() * vector.length()) /
+    return math.absEqual(
+      (math.abs(dot(this, vector)) - this.length() * vector.length()) /
         this.length(),
       0
     ) as boolean
   }
 
+  /**
+   * Returns true if the two vectors are orthogonal
+   */
   orthogonal(vector: Vector): boolean {
-    /** Returns true if the two vectors are orthogonal */
-    return math.equal(dot(this, vector), 0) as boolean
+    return math.absEqual(dot(this, vector), 0) as boolean
   }
 
+  /**
+   * Return the normalized version of the vector, that is a vector
+   * pointing in the same direction but with length 1.
+   */
   normalize() {
-    /**
-     * Return the normalized version of the vector, that is a vector
-     * pointing in the same direction but with length 1.
-     */
     // Division is not defined, so we have to multiply by 1/|v|
     const normalized = multiply(this, 1 / this.length())
-    this.v = normalized.toArray()
     this[0] = normalized[0]
     this[1] = normalized[1]
     this[2] = normalized[2]
@@ -156,7 +159,6 @@ export class Vector {
 
   negate(): Vector {
     const negative = multiply(this, -1)
-    this.v = negative.toArray()
     this[0] = negative[0]
     this[1] = negative[1]
     this[2] = negative[2]
@@ -165,6 +167,7 @@ export class Vector {
   }
 
   toArray(): [number, number, number] {
-    return [...this.v]
+    const [x, y, z] = this
+    return [x, y, z]
   }
 }

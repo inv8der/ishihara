@@ -43,7 +43,7 @@ export class Polyhedron implements Geometry<Polyhedron> {
         subtract(polygon.plane.position.vector, this.center.vector),
         polygon.plane.normal
       )
-      if (math.smaller(direction, 0)) {
+      if (math.absSmaller(direction, 0)) {
         polygon.negate()
       }
     }
@@ -97,7 +97,7 @@ export class Polyhedron implements Geometry<Polyhedron> {
         subtract(polygon.plane.position.vector, this.center.vector),
         polygon.plane.normal
       )
-      if (math.smaller(direction, 0)) {
+      if (math.absSmaller(direction, 0)) {
         return false
       }
     }
@@ -121,7 +121,7 @@ export class Polyhedron implements Geometry<Polyhedron> {
       const point = other as Point
       for (const polygon of this.polygons) {
         const direction = subtract(point.vector, polygon.center.vector)
-        if (math.larger(dot(direction, polygon.plane.normal), 0)) {
+        if (math.absLarger(dot(direction, polygon.plane.normal), 0)) {
           return false
         }
       }

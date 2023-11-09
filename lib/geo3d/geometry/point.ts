@@ -21,21 +21,24 @@ export class Point implements Geometry<Point> {
   constructor(
     ...args: [number, number, number] | [[number, number, number]] | [Vector]
   ) {
-    let coords
     if (args.length == 1) {
       // Initialisation by vector is also handled by this
-      coords = args[0]
+      const coords = args[0]
+      this.x = coords[0]
+      this.y = coords[1]
+      this.z = coords[2]
     } else if (args.length == 3) {
-      coords = args
+      const coords = args
+      this.x = coords[0]
+      this.y = coords[1]
+      this.z = coords[2]
     } else {
       throw new Error('Point() takes one or three arguments')
     }
-
-    ;[this.x, this.y, this.z] = coords
   }
 
   equals(other: Point): boolean {
-    const result = math.equal(
+    const result = math.absEqual(
       [this.x, this.y, this.z],
       [other.x, other.y, other.z]
     ) as unknown as [number, number, number]
@@ -57,8 +60,6 @@ export class Point implements Geometry<Point> {
     )
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   contains<T extends Geometry<T>>(other: T): boolean {
     // A point is the lowest dimensional object so it cannot contain any other geometry
