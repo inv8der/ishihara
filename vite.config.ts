@@ -13,7 +13,7 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       // Make sure to externalize deps that shouldn't be bundled into your library
-      external: ['colorjs.io', 'kd-tree-javascript'],
+      external: ['colorjs.io', 'kd-tree-javascript', 'mathjs'],
     },
     outDir: './dist',
   },
