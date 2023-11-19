@@ -1,4 +1,5 @@
 import { kdTree } from 'kd-tree-javascript'
+import { v4 as uuidv4 } from 'uuid'
 import type { Point } from '../types'
 
 interface StartCommand {
@@ -61,7 +62,6 @@ function* generatePlate(options: {
     ['x', 'y']
   )
 
-  let count = 0
   let tries = 0
   while (tries < maxIterations) {
     const p = generateRandomPoint({
@@ -69,7 +69,7 @@ function* generatePlate(options: {
       maxRadius,
       bounds: plate,
     })
-    const point: Point = { id: count + 1, ...p }
+    const point: Point = { id: uuidv4(), ...p }
     const nearest = tree.nearest(point, nearestCount)
 
     const invalidPlacement = nearest.some(([p]) => {
@@ -83,7 +83,6 @@ function* generatePlate(options: {
       continue
     }
 
-    count += 1
     tree.insert(point)
     yield point
     tries = 0

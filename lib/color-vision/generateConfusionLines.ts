@@ -1,6 +1,6 @@
 import Color from 'colorjs.io'
 import math from '../math'
-import type { Vector3D, ColorCoords } from '../types'
+import type { Vector3D, ColorCoords, Deficiency } from '../types'
 import { Parallelepiped, Line, Point, Vector, intersection } from '../geo3d'
 import { colorSpaceConverter, toHexString, LMSModel } from './convert'
 
@@ -17,10 +17,7 @@ const convert = colorSpaceConverter(LMSModel.SmithPokorny75)
  * @param deficiency One of Deficiency.PROTAN, DEUTAN or TRITAN to determine the confusion axis in LMS
  * @returns The points corresponding to the start and end of the line segment.
  */
-function lmsConfusionSegment(
-  lms: ColorCoords,
-  deficiency: 'protan' | 'deutan' | 'tritan'
-) {
+function lmsConfusionSegment(lms: ColorCoords, deficiency: Deficiency) {
   // First we build the linear RGB gamut (cube) in LMS. It becomes a parallelepiped since it's a linear transform.
   const lms_K = convert([0, 0, 0], 'linear-rgb', 'lms')
   const lms_R = convert([1, 0, 0], 'linear-rgb', 'lms')
@@ -76,10 +73,7 @@ function lmsConfusionSegment(
     : [end.toArray(), start.toArray()]
 }
 
-function createConfusionLine(
-  rgb: ColorCoords,
-  anomaly: 'protan' | 'deutan' | 'tritan'
-) {
+function createConfusionLine(rgb: ColorCoords, anomaly: Deficiency) {
   /**
    * This returns a line segment along the anomaly projection axis (L, M or S)
    * that passes through the input LMS color and stops at the boundaries of the
@@ -100,7 +94,7 @@ function createConfusionLine(
 }
 
 export default function generateConfusionLines(
-  type: 'deutan' | 'protan' | 'tritan',
+  type: Deficiency,
   amount = 11
 ): ColorRange[] {
   const red = new Color('#ff0000').to('xyz')

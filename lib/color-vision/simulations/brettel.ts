@@ -1,18 +1,6 @@
 import Color from 'colorjs.io'
 import math from '../../math'
-import type { Vector3D } from '../../types'
-
-// const simulations = {
-//   normal: (v) => v,
-//   protanopia: (v) => brettel(v, "protan", 1.0),
-//   protanomaly: (v) => brettel(v, "protan", 0.6),
-//   deuteranopia: (v) => brettel(v, "deutan", 1.0),
-//   deuteranomaly: (v) => brettel(v, "deutan", 0.6),
-//   tritanopia: (v) => brettel(v, "tritan", 1.0),
-//   tritanomaly: (v) => brettel(v, "tritan", 0.6),
-//   achromatopsia: (v) => monochrome_with_severity(v, 1.0),
-//   achromatomaly: (v) => monochrome_with_severity(v, 0.6),
-// }
+import type { Vector3D, ColorCoords, Deficiency } from '../../types'
 
 interface BrettelParams {
   projection1: [Vector3D, Vector3D, Vector3D]
@@ -20,13 +8,8 @@ interface BrettelParams {
   separationPlaneNormal: Vector3D
 }
 
-type ColorCoords = [number, number, number]
-
 // https://github.com/DaltonLens/libDaltonLens
-const brettelParamsByType: Record<
-  'protan' | 'deutan' | 'tritan',
-  BrettelParams
-> = {
+const brettelParamsByType: Record<Deficiency, BrettelParams> = {
   protan: {
     projection1: [
       [0.1498, 1.19548, -0.34528],
@@ -78,7 +61,7 @@ function toColor(rgb: string | ColorCoords): Color {
 
 function brettel(
   rgb: string | ColorCoords,
-  type: 'protan' | 'deutan' | 'tritan',
+  type: Deficiency,
   severity: number
 ): ColorCoords {
   // Convert from sRGB to linearRGB
@@ -124,14 +107,16 @@ function brettel(
     .coords.map((v) => math.clip(v, 0, 1)) as ColorCoords
 }
 
-brettel.normal = (rgb: string | ColorCoords) => toColor(rgb).coords
-brettel.protanopia = (rgb: string | ColorCoords) => brettel(rgb, 'protan', 1.0)
-brettel.protanomaly = (rgb: string | ColorCoords) => brettel(rgb, 'protan', 0.6)
-brettel.deuteranopia = (rgb: string | ColorCoords) =>
-  brettel(rgb, 'deutan', 1.0)
-brettel.deuteranomaly = (rgb: string | ColorCoords) =>
-  brettel(rgb, 'deutan', 0.6)
-brettel.tritanopia = (rgb: string | ColorCoords) => brettel(rgb, 'tritan', 1.0)
-brettel.tritanomaly = (rgb: string | ColorCoords) => brettel(rgb, 'tritan', 0.6)
+// const simulations = {
+//   normal: (v) => v,
+//   protanopia: (v) => brettel(v, "protan", 1.0),
+//   protanomaly: (v) => brettel(v, "protan", 0.6),
+//   deuteranopia: (v) => brettel(v, "deutan", 1.0),
+//   deuteranomaly: (v) => brettel(v, "deutan", 0.6),
+//   tritanopia: (v) => brettel(v, "tritan", 1.0),
+//   tritanomaly: (v) => brettel(v, "tritan", 0.6),
+//   achromatopsia: (v) => monochrome_with_severity(v, 1.0),
+//   achromatomaly: (v) => monochrome_with_severity(v, 0.6),
+// }
 
 export default brettel
