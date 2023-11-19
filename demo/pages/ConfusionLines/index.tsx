@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { generateConfusionLines } from '../lib'
+import { generateConfusionLines } from '../../../lib'
 
 const protan = generateConfusionLines('protan', 6)
 const deutan = generateConfusionLines('deutan', 6)
